@@ -77,6 +77,7 @@ function prepareDocument() {
     plane.width = bgl.width = dl.width = $(window).width() * 0.9;
     plane.height = bgl.height = dl.height = $(window).height() * 0.9;
     diagram = new Diagram(bgl.width, bgl.height);
+    diagram.drawBackground(bgl, bgc);
     $("#plane").mousemove(function (evt) {
         setMousePos(evt);
         mouseMovement();
@@ -95,7 +96,7 @@ function prepareDocument() {
 
 function mouseMovement() {
     if (click === true) {
-        diagram.moveEdited(mx, my);
+        diagram.moveEdited(mx, my, dl, dc);
     }
 }
 
