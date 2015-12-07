@@ -27,11 +27,13 @@
 
 var classList = [
     ["", "Diagram"],
-    ["drawing/", "Line", "Joint"]
+    ["drawing/", "Joint"]
 ];
 
 var classNumber;
 var classLoaded = 0;
+
+var DEBUG = false;
 
 window.onload = function () {
     var folder;

@@ -63,7 +63,6 @@ function Joint(x, y) {
         var count = 0;
         for (var i = 0; i < this.joints.length; i++) {
             if (this.joints[i] !== null) {
-                console.log(this.id + " : " + i + " " + this.joints[i].id + " " + this.responsible[i]);
                 count++;
             }
         }
@@ -122,11 +121,13 @@ function Joint(x, y) {
             ctx.fillStyle = 'black';
             ctx.fill();
         }
-        ctx.stroke();
-        ctx.fillStyle = 'black';
-        ctx.font = "15px Comic Sans MS";
-        ctx.textAlign = "center";
-        ctx.fillText(this.id, this.x + snapDistance / 2, this.y + snapDistance);
+        if (DEBUG) {
+            ctx.stroke();
+            ctx.fillStyle = 'black';
+            ctx.font = "15px Comic Sans MS";
+            ctx.textAlign = "center";
+            ctx.fillText(this.id, this.x + snapDistance / 2, this.y + snapDistance);
+        }
     };
 
     this.isClose = function (x, y) {
