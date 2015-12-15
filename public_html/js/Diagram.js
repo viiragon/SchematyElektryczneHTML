@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-var JOINT_ELEMENT = 0;
+var JOINT_ELEMENT = 0, NORMAL_ELEMENT = 1;
 
 var mode = 0;
 
@@ -32,10 +32,10 @@ function Diagram(width, height) {
 
     this.joints = [new Joint(width / 3, height / 2), new Joint(2 * width / 3, height / 2)];
     this.elements = [];
+    
     this.joints[0].id = 0;
     this.joints[1].id = 1;
     this.joints[0].connect(this.joints[1]);
-    console.log(this.joints[0].numberConnected() + " " + this.joints[1].numberConnected());
 
     this.addElementInPlace = function (code, x, y) {
         switch (code) {
@@ -47,6 +47,11 @@ function Diagram(width, height) {
                     this.addElementEdited(newJoint);
                     this.selected = joint;
                 }
+                break;
+            case NORMAL_ELEMENT:
+                var element = new Element(x, y);
+                this.edited = element;
+                this.addElementEdited(element);
                 break;
         }
     };

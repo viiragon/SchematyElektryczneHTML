@@ -27,7 +27,7 @@
 
 var classList = [
     ["", "Diagram"],
-    ["drawing/", "Joint"]
+    ["drawing/", "Joint", "Element"]
 ];
 
 var classNumber;
