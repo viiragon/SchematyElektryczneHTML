@@ -27,7 +27,9 @@
 
 var classList = [
     ["", "Diagram"],
-    ["drawing/", "Joint", "Element"]
+    ["circuit_elements/", "Joint", "Element"],
+    ["circuit_elements/elements/", "Diode"],
+    ["drawing_elements/", "LinePlacer"]
 ];
 
 var classNumber;
@@ -94,6 +96,9 @@ function prepareDocument() {
         diagram.drawBackground(bgl, bgc);
         click = false;
     });
+    $("#dioda").click(function () {
+        placingId = 1;
+    });
 }
 
 function mouseMovement() {
@@ -104,6 +109,7 @@ function mouseMovement() {
 
 function mouseClicked() {
     diagram.addElementInPlace(placingId, mx, my);
+    placingId = 0;
 }
 
 function mouseReleased() {

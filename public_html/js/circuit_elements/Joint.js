@@ -4,7 +4,9 @@
  * and open the template in the editor.
  */
 
-var CON_UP = 1, CON_DOWN = 3, CON_LEFT = 0, CON_RIGHT = 2;
+/* global diagram, DEBUG, snapDistance, mode, MODE_DELETE */
+
+var CON_UP = 1, CON_DOWN = 3, CON_LEFT = 2, CON_RIGHT = 0;
 
 function Joint(x, y) {
     this.joints = [null, null, null, null];
@@ -31,21 +33,7 @@ function Joint(x, y) {
         }
         return false;
     };
-
-    this.isConnected = function (direction) {
-        return this.joints[direction] !== null;
-    };
-
-    this.getFreeDirections = function () {
-        var isHor = this.joints[CON_DOWN] === null && this.joints[CON_UP] === null;
-        var isVer = this.joints[CON_LEFT] === null && this.joints[CON_RIGHT] === null;
-        return {
-            free: isHor || isVer,
-            horizontal: isHor,
-            vertical: isVer
-        };
-    };
-
+    
     this.connectInDirection = function (joint, myDirection) {
         var jointDirection = (myDirection + 2) % 4;
         this.joints[myDirection] = joint;
@@ -59,6 +47,41 @@ function Joint(x, y) {
         }
     };
 
+    this.canItConnect = function (x, y) {
+        if (x === this.x) {
+            if (y < this.y) {
+                return this.joints[CON_UP] === null;
+            } else {
+                return this.joints[CON_DOWN] === null;
+            }
+        } else if (y === this.y) {
+            if (x < this.x) {
+                return this.joints[CON_LEFT] === null;
+            } else {
+                return this.joints[CON_RIGHT] === null;
+            }
+        }
+        return false;
+    };
+
+    this.isFreeInDirection = function(dir) {
+        return this.joints[dir] === null;
+    };
+
+    this.getFreeDirections = function () {
+        var isHor = this.joints[CON_DOWN] === null && this.joints[CON_UP] === null;
+        var isVer = this.joints[CON_LEFT] === null && this.joints[CON_RIGHT] === null;
+        return {
+            free: isHor || isVer,
+            horizontal: isHor,
+            vertical: isVer,
+            up: this.joints[CON_UP] === null,
+            down: this.joints[CON_DOWN] === null,
+            left: this.joints[CON_LEFT] === null,
+            right: this.joints[CON_RIGHT] === null
+        };
+    };
+
     this.numberConnected = function () {
         var count = 0;
         for (var i = 0; i < this.joints.length; i++) {
@@ -67,6 +90,15 @@ function Joint(x, y) {
             }
         }
         return count;
+    };
+
+    this.detachOther = function (element) {
+        for (var i = 0; i < this.joints.length; i++) {
+            if (this.joints[i] === element) {
+                this.joints[i] = null;
+                this.responsible[i] = false;
+            }
+        }
     };
 
     this.detach = function () {
@@ -78,6 +110,22 @@ function Joint(x, y) {
         this.responsible[1] = false;
         this.responsible[2] = false;
         this.responsible[3] = false;
+    };
+
+    this.simplify = function () {
+        if (this.joints[CON_DOWN] === null && this.joints[CON_UP] === null
+                && this.joints[CON_LEFT] !== null && this.joints[CON_RIGHT] !== null
+                && this.joints[CON_LEFT] instanceof Joint && this.joints[CON_RIGHT] instanceof Joint) {
+            this.joints[CON_LEFT].connect(this.joints[CON_RIGHT]);
+            this.detach();
+            diagram.deleteElement(this);
+        } else if (this.joints[CON_LEFT] === null && this.joints[CON_RIGHT] === null
+                && this.joints[CON_DOWN] !== null && this.joints[CON_UP] !== null
+                && this.joints[CON_DOWN] instanceof Joint && this.joints[CON_UP] instanceof Joint) {
+            this.joints[CON_DOWN].connect(this.joints[CON_UP]);
+            this.detach();
+            diagram.deleteElement(this);
+        }
     };
 
     this.edit = function (x, y, root, direction) {
@@ -115,7 +163,7 @@ function Joint(x, y) {
                 }
             }
         }
-        if (count > 2) {
+        if (count === 0 || count > 2) {
             ctx.beginPath();
             ctx.arc(this.x, this.y, 2, 0, 2 * Math.PI);
             ctx.fillStyle = 'black';
@@ -199,12 +247,27 @@ function Joint(x, y) {
     };
 
     this.drawHighlight = function (x, y, c, ctx) {
-        ctx.beginPath();
-        ctx.arc(x, y, 4, 0, 2 * Math.PI);
-        ctx.fillStyle = 'white';
-        ctx.fill();
-        ctx.strokeStyle = 'black';
-        ctx.stroke();
+        if (mode !== MODE_DELETE) {
+            ctx.beginPath();
+            ctx.arc(x, y, 4, 0, 2 * Math.PI);
+            ctx.fillStyle = 'white';
+            ctx.fill();
+            ctx.strokeStyle = 'black';
+            ctx.stroke();
+        } else {
+            var d = snapDistance / 2;
+            ctx.lineWidth = d / 2;
+            ctx.moveTo(x - d, y - d);
+            ctx.lineTo(x + d, y + d);
+            ctx.strokeStyle = 'red';
+            ctx.stroke();
+
+            ctx.moveTo(x - d, y + d);
+            ctx.lineTo(x + d, y - d);
+            ctx.strokeStyle = 'red';
+            ctx.stroke();
+            ctx.lineWidth = 1;
+        }
     };
 }
 

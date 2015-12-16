@@ -4,6 +4,8 @@
  * and open the template in the editor.
  */
 
+/* global Element */
+
 var JOINT_ELEMENT = 0, NORMAL_ELEMENT = 1;
 
 var mode = 0;
@@ -16,6 +18,8 @@ var nullElement = {
 
 var snapDistance; //Odległość po której obiekt jest wychwytywany
 
+var scale; //Jednostka skali (wielkości) planszy
+
 function distance(sx, sy, ex, ey) {
     return Math.max(Math.abs(sx - ex), Math.abs(sy - ey));
 }
@@ -23,7 +27,8 @@ function distance(sx, sy, ex, ey) {
 function Diagram(width, height) {
     this.width = width;
     this.height = height;
-    snapDistance = Math.min(width, height) / 40;
+    scale = Math.min(width, height) / 120;
+    snapDistance = scale * 2;
     this.edited = nullElement;
     this.selected = nullElement;
 
@@ -32,7 +37,8 @@ function Diagram(width, height) {
 
     this.joints = [new Joint(width / 3, height / 2), new Joint(2 * width / 3, height / 2)];
     this.elements = [];
-    
+    this.placer = new LinePlacer();
+
     this.joints[0].id = 0;
     this.joints[1].id = 1;
     this.joints[0].connect(this.joints[1]);
@@ -40,16 +46,14 @@ function Diagram(width, height) {
     this.addElementInPlace = function (code, x, y) {
         switch (code) {
             case JOINT_ELEMENT:
-                var joint = this.findClosestJoint(x, y, false);
+                var joint = this.findClosestJoint(x, y, false, this.edited);
                 if (joint.id !== -1) {
-                    var newJoint = new Joint(joint.x, joint.y);
-                    this.edited = newJoint;
-                    this.addElementEdited(newJoint);
-                    this.selected = joint;
+                    this.edited = joint;
+                    this.placer.setEdited(joint);
                 }
                 break;
             case NORMAL_ELEMENT:
-                var element = new Element(x, y);
+                var element = new Diode(x, y);
                 this.edited = element;
                 this.addElementEdited(element);
                 break;
@@ -62,7 +66,18 @@ function Diagram(width, height) {
             element.id = this.jointId++;
         } else {
             this.elements.push(element);
+            for (var i = 0; i < this.elementId; i++)
+                element.rotate();
             element.id = this.elementId++;
+
+            var joint;
+            for (var i = 0; i < element.joints.length; i++) {
+                joint = element.joints[i];
+                console.log(i + "." + joint);
+                for (var j = 0; j < 4; j++) {
+                    console.log(" " + j + ". " + (joint.joints[j] === null));
+                }
+            }
         }
     };
 
@@ -73,21 +88,11 @@ function Diagram(width, height) {
     };
 
     this.moveEdited = function (x, y, dl, dc) {
+        x = Math.floor(x / scale) * scale;
+        y = Math.floor(y / scale) * scale;
         if (this.edited.id !== -1) {
             if (this.edited instanceof Joint) {
-                if (Math.abs(this.selected.x - x) > Math.abs(this.selected.y - y)) {
-                    if (this.selected.x - x > 0) {
-                        this.edited.edit(x, y, this.selected, CON_LEFT);
-                    } else {
-                        this.edited.edit(x, y, this.selected, CON_RIGHT);
-                    }
-                } else {
-                    if (this.selected.y - y > 0) {
-                        this.edited.edit(x, y, this.selected, CON_UP);
-                    } else {
-                        this.edited.edit(x, y, this.selected, CON_DOWN);
-                    }
-                }
+                this.placer.edit(x, y);
             } else {
                 this.edited.setPos(x, y);
             }
@@ -95,40 +100,20 @@ function Diagram(width, height) {
     };
 
     this.discardEdited = function () {
-        if (this.edited instanceof Joint) {
-            if (this.selected.isClose(this.edited.x, this.edited.y)) {
-                this.deleteElement(this.edited);
-                this.edited = nullElement;
+        if (this.edited instanceof Joint && this.placer.isPlaceable()) {
+            var joint = this.findClosestJoint(this.placer.x, this.placer.y, false, this.edited);
+            if (joint.id !== -1) {
+                this.placer.connect(joint);
             } else {
-                var done = false;
-                var joint = this.findClosestJoint(this.edited.x, this.edited.y, true);
+                this.placer.place();
+            }
+        } else if (this.edited instanceof Element && this.edited.isPlaceable()) {
+            var joint;
+            for (var i = 0; i < this.edited.joints.length; i++) {
+                joint = this.edited.joints[i];
+                joint = this.findClosestJoint(joint.x, joint.y, false, joint);
                 if (joint.id !== -1) {
-                    var dirs = joint.getFreeDirections();
-                    var myDirs = this.edited.getFreeDirections();
-                    if (dirs.free) {
-                        if (myDirs.vertical && dirs.horizontal) {
-                            joint.x = this.edited.x;
-                            done = true;
-                        } else if (myDirs.horizontal && dirs.vertical) {
-                            joint.y = this.edited.y;
-                            done = true;
-                        }
-                        if (done) {
-                            this.addElement(joint);
-                            this.selected.connect(joint);
-                            this.deleteElement(this.edited);
-                        }
-                    }
-                }
-                if (!done) {
-                    var jointInLines = this.findClosestJoint(this.edited.x, this.edited.y, false);
-                    if (jointInLines.id !== -1 && jointInLines !== joint) {
-                        this.addElement(jointInLines);
-                        this.selected.connect(jointInLines);
-                        this.deleteElement(this.edited);
-                    } else {
-                        this.selected.connect(this.edited);
-                    }
+                    this.edited.place(i, joint);
                 }
             }
         }
@@ -162,9 +147,6 @@ function Diagram(width, height) {
 
     this.clearScreen = function (l, lc) {
         lc.beginPath();
-        lc.rect(0, 0, l.width, l.height);
-        lc.fillStyle = 'white';
-        lc.fill();
         lc.clearRect(0, 0, l.width, l.height);
     };
 
@@ -181,27 +163,44 @@ function Diagram(width, height) {
     this.drawWorkingLayer = function (dl, dc, mx, my) {
         this.clearScreen(dl, dc);
         if (this.edited.id !== -1) {
-            this.edited.drawMe(dl, dc);
-            this.highlightElements(dl, dc, this.edited.x, this.edited.y);
+            if (this.edited instanceof Joint) {
+                this.placer.drawMe(dl, dc);
+                this.highlightElements(dl, dc, this.placer.x, this.placer.y, this.edited);
+            } else if (this.edited instanceof Element) {
+                this.edited.drawMe(dl, dc);
+                var joint;
+                for (var i = 0; i < this.edited.joints.length; i++) {
+                    joint = this.edited.joints[i];
+                    if (this.highlightElements(dl, dc, joint.x, joint.y, joint)) {
+                        break;
+                    }
+                }
+            } else {
+                this.edited.drawMe(dl, dc);
+                this.highlightElements(dl, dc, this.edited.x, this.edited.y, this.edited);
+            }
         } else
-            this.highlightElements(dl, dc, mx, my);
+            this.highlightElements(dl, dc, mx, my, this.edited);
     };
 
-    this.highlightElements = function (dl, dc, mx, my) {
+    this.highlightElements = function (dl, dc, mx, my, edited) {
         for (var i = 0; i < this.joints.length; i++) {
-            if (this.joints[i].id !== this.edited.id) {
+            if (this.joints[i].id !== edited.id) {
                 if (this.joints[i].highlightMe(mx, my, dl, dc)) {
-                    break;
+                    return true;
                 }
             }
         }
+        return false;
     };
 
-    this.findClosestJoint = function (mx, my, onlyJoints) {
+    this.findClosestJoint = function (mx, my, onlyJoints, exception) {
         for (var i = 0; i < this.joints.length; i++) {
-            var joint = this.joints[i].getClosestJoint(mx, my, onlyJoints);
-            if (joint !== null)
-                return joint;
+            if (this.joints[i].id !== exception.id) {
+                var joint = this.joints[i].getClosestJoint(mx, my, onlyJoints);
+                if (joint !== null)
+                    return joint;
+            }
         }
         return nullElement;
     };
