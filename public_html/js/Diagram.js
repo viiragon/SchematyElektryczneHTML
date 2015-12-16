@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* global Element */
+/* global Element, DEBUG, Joint */
 
 var JOINT_ELEMENT = 0, NORMAL_ELEMENT = 1;
 
@@ -16,7 +16,7 @@ var nullElement = {
     id: -1
 };
 
-var snapDistance; //Odległość po której obiekt jest wychwytywany
+var snapDistance; //Odległość po której obiekt jest wychwytywany (scale * 2)
 
 var scale; //Jednostka skali (wielkości) planszy
 
@@ -44,6 +44,7 @@ function Diagram(width, height) {
     this.joints[0].connect(this.joints[1]);
 
     this.addElementInPlace = function (code, x, y) {
+        var element = null;
         switch (code) {
             case JOINT_ELEMENT:
                 var joint = this.findClosestJoint(x, y, false, this.edited);
@@ -53,11 +54,17 @@ function Diagram(width, height) {
                 }
                 break;
             case NORMAL_ELEMENT:
-                var element = new Diode(x, y);
-                this.edited = element;
-                this.addElementEdited(element);
+                element = new TmpElement(x, y);
                 break;
         }
+        if (element !== null) {
+            this.edited = element;
+            this.addElementEdited(element);
+        }
+    };
+    
+    this.deleteElementInPlace = function (x, y) {
+        
     };
 
     this.addElement = function (element) {
@@ -69,13 +76,14 @@ function Diagram(width, height) {
             for (var i = 0; i < this.elementId; i++)
                 element.rotate();
             element.id = this.elementId++;
-
-            var joint;
-            for (var i = 0; i < element.joints.length; i++) {
-                joint = element.joints[i];
-                console.log(i + "." + joint);
-                for (var j = 0; j < 4; j++) {
-                    console.log(" " + j + ". " + (joint.joints[j] === null));
+            if (DEBUG) {
+                var joint;
+                for (var i = 0; i < element.joints.length; i++) {
+                    joint = element.joints[i];
+                    console.log(i + "." + joint);
+                    for (var j = 0; j < 4; j++) {
+                        console.log(" " + j + ". " + (joint.joints[j] === null));
+                    }
                 }
             }
         }
@@ -113,7 +121,21 @@ function Diagram(width, height) {
                 joint = this.edited.joints[i];
                 joint = this.findClosestJoint(joint.x, joint.y, false, joint);
                 if (joint.id !== -1) {
-                    this.edited.place(i, joint);
+                    this.edited.place(i, joint, false);
+                    break;
+                }
+            }
+            var previous = joint;
+            if (previous.id !== -1) {
+                for (var i = 0; i < this.edited.joints.length; i++) {
+                    joint = this.edited.joints[i];
+                    if (joint.id !== previous.id) {
+                        joint = this.findExactJoint(joint.x, joint.y, false, joint);
+                        if (joint.id !== -1) {
+                            this.edited.place(i, joint, true);
+                            break;
+                        }
+                    }
                 }
             }
         }
@@ -198,6 +220,17 @@ function Diagram(width, height) {
         for (var i = 0; i < this.joints.length; i++) {
             if (this.joints[i].id !== exception.id) {
                 var joint = this.joints[i].getClosestJoint(mx, my, onlyJoints);
+                if (joint !== null)
+                    return joint;
+            }
+        }
+        return nullElement;
+    };
+
+    this.findExactJoint = function (mx, my, onlyJoints, exception) {
+        for (var i = 0; i < this.joints.length; i++) {
+            if (this.joints[i].id !== exception.id) {
+                var joint = this.joints[i].getExactJoint(mx, my, onlyJoints);
                 if (joint !== null)
                     return joint;
             }

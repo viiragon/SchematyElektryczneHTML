@@ -40,8 +40,8 @@ function Element(x, y) {
         var tmp;
         for (var i = 0; i < this.joints.length; i++) {
             tmp = this.placements[2 * i];
-            this.placements[2 * i] = this.placements[2 * i + 1];
-            this.placements[2 * i + 1] = -tmp;
+            this.placements[2 * i] = -this.placements[2 * i + 1];
+            this.placements[2 * i + 1] = tmp;
 
             this.joints[i].joints[this.attachments[i]] = null;
             this.joints[i].responsible[this.attachments[i]] = false;
@@ -52,11 +52,12 @@ function Element(x, y) {
         }
     };
 
-    this.place = function (i, endJoint) {
+    this.place = function (i, endJoint, additional) {
         var joint = this.joints[i];
-        var xd = endJoint.x - joint.x;
-        var yd = endJoint.y - joint.y;
-        this.setPos(this.x + xd, this.y + yd);
+        if (!additional) {
+            this.setPos(this.x + endJoint.x - joint.x,
+                    this.y + endJoint.y - joint.y);
+        }
         joint.detachOther(this);
         diagram.deleteElement(joint);
         this.joints[i] = endJoint;

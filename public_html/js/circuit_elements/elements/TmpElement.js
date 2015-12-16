@@ -6,13 +6,14 @@
 
 /* global scale, CON_RIGHT, CON_LEFT, CON_UP, CON_DOWN */
 
-function Diode(x, y) {
+function TmpElement(x, y) {
     var element = new Element(x, y);
 
     element.width = 12 * scale;
     element.placements = [-scale * 6, 0,
-        scale * 6, 0];
-    element.attachments = [CON_RIGHT, CON_LEFT];
+        scale * 6, 0,
+        0, scale * 6];
+    element.attachments = [CON_RIGHT, CON_LEFT, CON_UP];
     element.setUpJoints();
 
     element.drawMe = function (c, ctx) {

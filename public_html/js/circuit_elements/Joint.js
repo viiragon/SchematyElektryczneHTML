@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* global diagram, DEBUG, snapDistance, mode, MODE_DELETE */
+/* global diagram, DEBUG, snapDistance, mode, MODE_DELETE, scale */
 
 var CON_UP = 1, CON_DOWN = 3, CON_LEFT = 2, CON_RIGHT = 0;
 
@@ -33,7 +33,7 @@ function Joint(x, y) {
         }
         return false;
     };
-    
+
     this.connectInDirection = function (joint, myDirection) {
         var jointDirection = (myDirection + 2) % 4;
         this.joints[myDirection] = joint;
@@ -64,7 +64,7 @@ function Joint(x, y) {
         return false;
     };
 
-    this.isFreeInDirection = function(dir) {
+    this.isFreeInDirection = function (dir) {
         return this.joints[dir] === null;
     };
 
@@ -144,38 +144,13 @@ function Joint(x, y) {
     this.setPos = function (x, y) {
         this.x = x;
         this.y = y;
+        if (x % scale === 0 && x % scale === 0) {
+            console.log((x % scale) + " " + (y % scale));
+        }
     };
 
     this.isHorizontal = function (direction) {
         return direction % 2 === 0;
-    };
-
-    this.drawMe = function (c, ctx) {
-        var count = 0;
-        for (var i = 0; i < this.joints.length; i++) {
-            if (this.joints[i] !== null) {
-                count++;
-                if (this.responsible[i]) {
-                    ctx.moveTo(this.x, this.y);
-                    ctx.lineTo(this.joints[i].x, this.joints[i].y);
-                    ctx.strokeStyle = 'black';
-                    ctx.stroke();
-                }
-            }
-        }
-        if (count === 0 || count > 2) {
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, 2, 0, 2 * Math.PI);
-            ctx.fillStyle = 'black';
-            ctx.fill();
-        }
-        if (DEBUG) {
-            ctx.stroke();
-            ctx.fillStyle = 'black';
-            ctx.font = "15px Comic Sans MS";
-            ctx.textAlign = "center";
-            ctx.fillText(this.id, this.x + snapDistance / 2, this.y + snapDistance);
-        }
     };
 
     this.isClose = function (x, y) {
@@ -225,6 +200,74 @@ function Joint(x, y) {
             }
         }
         return null;
+    };
+
+    this.isOnLine = function (x, y, d) {
+        var end = this.joints[d];
+        if (this.isHorizontal(d)) {
+            if (this.y === y
+                    && ((this.x < end.x && x > this.x && x < end.x)
+                            || (this.x > end.x && x > end.x && x < this.x)))
+                return true;
+        } else {
+            if (this.x === x
+                    && ((this.y < end.y && y > this.y && y < end.y)
+                            || (this.y > end.y && y > end.y && x < this.y)))
+                return true;
+        }
+        return false;
+    };
+
+    this.getExactJoint = function (x, y, onlyJoints) {
+        if (this.x === x && this.y === y && this.numberConnected() < 4) {
+            return this;
+        }
+        if (!onlyJoints) {
+            for (var i = 0; i < this.joints.length; i++) {
+                if (this.joints[i] !== null && this.responsible[i]) {
+                    if (this.isOnLine(x, y, i)) {
+                        var joint;
+                        if (this.isHorizontal(i))
+                            joint = new Joint(x, this.y);
+                        else
+                            joint = new Joint(this.x, y);
+                        diagram.addElement(joint);
+                        this.joints[i].connect(joint);
+                        this.connect(joint);
+                        return joint;
+                    }
+                }
+            }
+        }
+        return null;
+    };
+
+    this.drawMe = function (c, ctx) {
+        var count = 0;
+        for (var i = 0; i < this.joints.length; i++) {
+            if (this.joints[i] !== null) {
+                count++;
+                if (this.responsible[i]) {
+                    ctx.moveTo(this.x, this.y);
+                    ctx.lineTo(this.joints[i].x, this.joints[i].y);
+                    ctx.strokeStyle = 'black';
+                    ctx.stroke();
+                }
+            }
+        }
+        if (count === 0 || count > 2) {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, scale / 2, 0, 2 * Math.PI);
+            ctx.fillStyle = 'black';
+            ctx.fill();
+        }
+        if (DEBUG) {
+            ctx.stroke();
+            ctx.fillStyle = 'black';
+            ctx.font = "15px Comic Sans MS";
+            ctx.textAlign = "center";
+            ctx.fillText(this.id, this.x + snapDistance / 2, this.y + snapDistance);
+        }
     };
 
     this.highlightMe = function (x, y, c, ctx) {

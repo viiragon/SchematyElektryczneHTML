@@ -25,10 +25,12 @@
  * ctx.drawImage(img, 10, 10);
  */
 
+/* global MODE_DELETE, MODE_JOINTS */
+
 var classList = [
     ["", "Diagram"],
     ["circuit_elements/", "Joint", "Element"],
-    ["circuit_elements/elements/", "Diode"],
+    ["circuit_elements/elements/", "Diode", "TmpElement"],
     ["drawing_elements/", "LinePlacer"]
 ];
 
@@ -71,6 +73,9 @@ var click;
 
 var placingId = 0;  //Co kładziemy
 
+var keyPressed;
+var tmpMode = 0;
+
 function prepareDocument() {
     var plane = document.getElementById("plane");
     bgl = document.getElementById("backgroundLayer");
@@ -82,6 +87,7 @@ function prepareDocument() {
     plane.height = bgl.height = dl.height = $(window).height() * 0.9;
     diagram = new Diagram(bgl.width, bgl.height);
     diagram.drawBackground(bgl, bgc);
+
     $("#plane").mousemove(function (evt) {
         setMousePos(evt);
         mouseMovement();
@@ -99,6 +105,43 @@ function prepareDocument() {
     $("#dioda").click(function () {
         placingId = 1;
     });
+    window.addEventListener("keydown", function (evt) {
+        if (!keyPressed) {
+            keyboardPressed(evt.keyCode);
+            diagram.drawWorkingLayer(dl, dc, mx, my);
+            keyPressed = true;
+        }
+    }, false);
+    window.addEventListener("keyup", function (evt) {
+        if (keyPressed) {
+            keyboardReleased(evt.keyCode);
+            diagram.drawWorkingLayer(dl, dc, mx, my);
+            keyPressed = false;
+        }
+    }, false);
+}
+
+function keyboardPressed(key) {
+    if (DEBUG) {
+        console.log("down: " + key);
+    }
+    switch (key) {
+        case 46:
+            tmpMode = mode;
+            mode = MODE_DELETE;
+            break;
+    }
+}
+
+function keyboardReleased(key) {
+    if (DEBUG) {
+        console.log("up: " + key);
+    }
+    switch (key) {
+        case 46:
+            mode = tmpMode;
+            break;
+    }
 }
 
 function mouseMovement() {
@@ -108,12 +151,19 @@ function mouseMovement() {
 }
 
 function mouseClicked() {
-    diagram.addElementInPlace(placingId, mx, my);
-    placingId = 0;
+    switch (mode) {
+        case MODE_JOINTS:
+            diagram.addElementInPlace(placingId, mx, my);
+            break;
+        case MODE_DELETE:
+            diagram.deleteElementInPlace(mx, my);
+            break;
+    }
 }
 
 function mouseReleased() {
     diagram.discardEdited();
+    placingId = 0;
 }
 
 function setMousePos(evt) {
