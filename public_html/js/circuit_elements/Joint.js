@@ -14,6 +14,7 @@ function Joint(x, y) {
     this.x = x;
     this.y = y;
     this.id = -2;
+    this.hasElement = false;
 
     this.connect = function (joint) {
         if (joint.x === this.x) {
@@ -113,18 +114,20 @@ function Joint(x, y) {
     };
 
     this.simplify = function () {
-        if (this.joints[CON_DOWN] === null && this.joints[CON_UP] === null
-                && this.joints[CON_LEFT] !== null && this.joints[CON_RIGHT] !== null
-                && this.joints[CON_LEFT] instanceof Joint && this.joints[CON_RIGHT] instanceof Joint) {
-            this.joints[CON_LEFT].connect(this.joints[CON_RIGHT]);
-            this.detach();
-            diagram.deleteElement(this);
-        } else if (this.joints[CON_LEFT] === null && this.joints[CON_RIGHT] === null
-                && this.joints[CON_DOWN] !== null && this.joints[CON_UP] !== null
-                && this.joints[CON_DOWN] instanceof Joint && this.joints[CON_UP] instanceof Joint) {
-            this.joints[CON_DOWN].connect(this.joints[CON_UP]);
-            this.detach();
-            diagram.deleteElement(this);
+        if (!this.hasElement) {
+            if (this.joints[CON_DOWN] === null && this.joints[CON_UP] === null
+                    && this.joints[CON_LEFT] !== null && this.joints[CON_RIGHT] !== null
+                    && this.joints[CON_LEFT] instanceof Joint && this.joints[CON_RIGHT] instanceof Joint) {
+                this.joints[CON_LEFT].connect(this.joints[CON_RIGHT]);
+                this.detach();
+                diagram.deleteElement(this);
+            } else if (this.joints[CON_LEFT] === null && this.joints[CON_RIGHT] === null
+                    && this.joints[CON_DOWN] !== null && this.joints[CON_UP] !== null
+                    && this.joints[CON_DOWN] instanceof Joint && this.joints[CON_UP] instanceof Joint) {
+                this.joints[CON_DOWN].connect(this.joints[CON_UP]);
+                this.detach();
+                diagram.deleteElement(this);
+            }
         }
     };
 
@@ -144,9 +147,6 @@ function Joint(x, y) {
     this.setPos = function (x, y) {
         this.x = x;
         this.y = y;
-        if (x % scale === 0 && x % scale === 0) {
-            console.log((x % scale) + " " + (y % scale));
-        }
     };
 
     this.isHorizontal = function (direction) {
@@ -263,7 +263,10 @@ function Joint(x, y) {
         }
         if (DEBUG) {
             ctx.stroke();
-            ctx.fillStyle = 'black';
+            if (this.hasElement)
+                ctx.fillStyle = 'blue';
+            else
+                ctx.fillStyle = 'black';
             ctx.font = "15px Comic Sans MS";
             ctx.textAlign = "center";
             ctx.fillText(this.id, this.x + snapDistance / 2, this.y + snapDistance);
@@ -272,6 +275,9 @@ function Joint(x, y) {
 
     this.highlightMe = function (x, y, c, ctx) {
         if (this.isCloseAndFree(x, y)) {
+            if (mode === MODE_DELETE && this.hasElement) {
+                return false;
+            }
             this.drawHighlight(this.x, this.y, c, ctx);
             return true;
         }
@@ -289,13 +295,43 @@ function Joint(x, y) {
         return false;
     };
 
+    this.deleteMe = function (x, y) {
+        if (this.isCloseAndFree(x, y)) {
+            if (mode === MODE_DELETE && this.hasElement) {
+                return false;
+            }
+            for (var i = 0; i < this.joints.length; i++) {
+                if (this.joints[i] !== null) {
+                    this.joints[i].joints[(i + 2) % 4] = null;
+                    this.joints[i].responsible[(i + 2) % 4] = false;
+                    this.joints[i].simplify();
+                }
+            }
+            diagram.deleteElement(this);
+            return true;
+        }
+        for (var i = 0; i < this.joints.length; i++) {
+            if (this.joints[i] !== null && this.responsible[i]) {
+                if (this.isCloseToLine(x, y, i)) {
+                    this.joints[i].joints[(i + 2) % 4] = null;
+                    this.joints[i].simplify();
+                    this.joints[i] = null;
+                    this.responsible[i] = false;
+                    this.simplify();
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+
     this.drawHighlight = function (x, y, c, ctx) {
         if (mode !== MODE_DELETE) {
             ctx.beginPath();
             ctx.arc(x, y, 4, 0, 2 * Math.PI);
             ctx.fillStyle = 'white';
             ctx.fill();
-            ctx.strokeStyle = 'black';
+            ctx.strokeStyle = 'blue';
             ctx.stroke();
         } else {
             var d = snapDistance / 2;

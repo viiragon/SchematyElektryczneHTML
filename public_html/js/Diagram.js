@@ -10,7 +10,7 @@ var JOINT_ELEMENT = 0, NORMAL_ELEMENT = 1;
 
 var mode = 0;
 
-var MODE_JOINTS = 0, MODE_DELETE = 1;
+var MODE_JOINTS = 0, MODE_DELETE = 1, MODE_MOVE = 2;
 
 var nullElement = {
     id: -1
@@ -27,7 +27,7 @@ function distance(sx, sy, ex, ey) {
 function Diagram(width, height) {
     this.width = width;
     this.height = height;
-    scale = Math.min(width, height) / 120;
+    scale = Math.floor(Math.min(width, height) / 120);
     snapDistance = scale * 2;
     this.edited = nullElement;
     this.selected = nullElement;
@@ -35,7 +35,8 @@ function Diagram(width, height) {
     this.elementId = 0;
     this.jointId = 2;
 
-    this.joints = [new Joint(width / 3, height / 2), new Joint(2 * width / 3, height / 2)];
+    this.joints = [new Joint(Math.floor((width / 3) / scale) * scale, Math.floor((height / 2) / scale) * scale)
+                , new Joint(Math.floor((2 * width / 3) / scale) * scale, Math.floor((height / 2) / scale) * scale)];
     this.elements = [];
     this.placer = new LinePlacer();
 
@@ -62,9 +63,22 @@ function Diagram(width, height) {
             this.addElementEdited(element);
         }
     };
-    
+
     this.deleteElementInPlace = function (x, y) {
-        
+        var deleted = false;
+        for (var i = 0; i < this.joints.length; i++) {
+            if (this.joints[i].deleteMe(x, y)) {
+                deleted = true;
+                break;
+            }
+        }
+        if (!deleted) {
+            for (var i = 0; i < this.elements.length; i++) {
+                if (this.elements[i].deleteMe(x, y)) {
+                    break;
+                }
+            }
+        }
     };
 
     this.addElement = function (element) {
@@ -156,6 +170,17 @@ function Diagram(width, height) {
                         break;
                     }
                 }
+            } else if (element instanceof Element) {
+                for (var i = 0; i < this.elements.length; i++) {
+                    if (this.elements[i] === element) {
+                        this.elements.splice(i, 1);
+                        var j;
+                        for (j = 0; j < this.elements.length; j++)
+                            this.elements[j].id = j;
+                        this.elementId = j;
+                        break;
+                    }
+                }
             }
         }
     };
@@ -187,25 +212,30 @@ function Diagram(width, height) {
         if (this.edited.id !== -1) {
             if (this.edited instanceof Joint) {
                 this.placer.drawMe(dl, dc);
-                this.highlightElements(dl, dc, this.placer.x, this.placer.y, this.edited);
+                this.highlightJoints(dl, dc, this.placer.x, this.placer.y, this.edited);
             } else if (this.edited instanceof Element) {
                 this.edited.drawMe(dl, dc);
                 var joint;
                 for (var i = 0; i < this.edited.joints.length; i++) {
                     joint = this.edited.joints[i];
-                    if (this.highlightElements(dl, dc, joint.x, joint.y, joint)) {
+                    if (this.highlightJoints(dl, dc, joint.x, joint.y, joint)) {
                         break;
                     }
                 }
             } else {
                 this.edited.drawMe(dl, dc);
-                this.highlightElements(dl, dc, this.edited.x, this.edited.y, this.edited);
+                this.highlightJoints(dl, dc, this.edited.x, this.edited.y, this.edited);
             }
-        } else
-            this.highlightElements(dl, dc, mx, my, this.edited);
+        } else {
+            if (!this.highlightJoints(dl, dc, mx, my, this.edited)) {
+                this.highlightElements(dl, dc, mx, my, this.edited);
+            }
+        }
     };
 
-    this.highlightElements = function (dl, dc, mx, my, edited) {
+    this.highlightJoints = function (dl, dc, mx, my, edited) {
+        mx = Math.floor(mx / scale) * scale;
+        my = Math.floor(my / scale) * scale;
         for (var i = 0; i < this.joints.length; i++) {
             if (this.joints[i].id !== edited.id) {
                 if (this.joints[i].highlightMe(mx, my, dl, dc)) {
@@ -216,7 +246,22 @@ function Diagram(width, height) {
         return false;
     };
 
+    this.highlightElements = function (dl, dc, mx, my, edited) {
+        mx = Math.floor(mx / scale) * scale;
+        my = Math.floor(my / scale) * scale;
+        for (var i = 0; i < this.elements.length; i++) {
+            if (this.elements[i].id !== edited.id) {
+                if (this.elements[i].highlightMe(mx, my, dl, dc)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+
     this.findClosestJoint = function (mx, my, onlyJoints, exception) {
+        mx = Math.floor(mx / scale) * scale;
+        my = Math.floor(my / scale) * scale;
         for (var i = 0; i < this.joints.length; i++) {
             if (this.joints[i].id !== exception.id) {
                 var joint = this.joints[i].getClosestJoint(mx, my, onlyJoints);
@@ -228,6 +273,8 @@ function Diagram(width, height) {
     };
 
     this.findExactJoint = function (mx, my, onlyJoints, exception) {
+        mx = Math.floor(mx / scale) * scale;
+        my = Math.floor(my / scale) * scale;
         for (var i = 0; i < this.joints.length; i++) {
             if (this.joints[i].id !== exception.id) {
                 var joint = this.joints[i].getExactJoint(mx, my, onlyJoints);

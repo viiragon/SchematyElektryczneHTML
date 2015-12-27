@@ -9,10 +9,10 @@
 var DIR_HORIZONTAL = 0, DIR_VERTICAL = 1;
 
 function LinePlacer() {
-    this.x = 0;
-    this.y = 0;
-    this.sx = 0;
-    this.sy = 0;
+    this.x = -1;
+    this.y = -1;
+    this.sx = -1;
+    this.sy = -1;
     this.edited = null;
     this.direction = 0;
     this.frees;

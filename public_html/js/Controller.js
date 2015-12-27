@@ -25,12 +25,12 @@
  * ctx.drawImage(img, 10, 10);
  */
 
-/* global MODE_DELETE, MODE_JOINTS */
+/* global MODE_DELETE, MODE_JOINTS, MODE_MOVE */
 
 var classList = [
     ["", "Diagram"],
     ["circuit_elements/", "Joint", "Element"],
-    ["circuit_elements/elements/", "Diode", "TmpElement"],
+    ["circuit_elements/element_creators/", "Diode", "TmpElement"],
     ["drawing_elements/", "LinePlacer"]
 ];
 
@@ -130,6 +130,10 @@ function keyboardPressed(key) {
             tmpMode = mode;
             mode = MODE_DELETE;
             break;
+        case 16:
+            tmpMode = mode;
+            mode = MODE_MOVE;
+            break;
     }
 }
 
@@ -138,6 +142,7 @@ function keyboardReleased(key) {
         console.log("up: " + key);
     }
     switch (key) {
+        case 16:
         case 46:
             mode = tmpMode;
             break;
