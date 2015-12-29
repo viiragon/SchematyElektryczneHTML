@@ -31,7 +31,9 @@ var classList = [
     ["", "Diagram"],
     ["circuit_elements/", "Joint", "Element"],
     ["circuit_elements/element_creators/", "Diode", "TmpElement"],
-    ["drawing_elements/", "LinePlacer"]
+    ["drawing_elements/", "LinePlacer", "GuiElement"],
+    ["drawing_elements/GUI/", "ToolsGUI", "ToolsAppearer"],
+    ["drawing_elements/GUI/choices/", "ChooseNormal", "ChooseDelete", "ChooseElement"]
 ];
 
 var classNumber;
@@ -102,9 +104,6 @@ function prepareDocument() {
         diagram.drawBackground(bgl, bgc);
         click = false;
     });
-    $("#dioda").click(function () {
-        placingId = 1;
-    });
     window.addEventListener("keydown", function (evt) {
         if (!keyPressed) {
             keyboardPressed(evt.keyCode);
@@ -156,19 +155,21 @@ function mouseMovement() {
 }
 
 function mouseClicked() {
-    switch (mode) {
-        case MODE_JOINTS:
-            diagram.addElementInPlace(placingId, mx, my);
-            break;
-        case MODE_DELETE:
-            diagram.deleteElementInPlace(mx, my);
-            break;
+    if (!diagram.checkGUIInPlace(mx, my)) {
+        switch (mode) {
+            case MODE_JOINTS:
+                diagram.addElementInPlace(placingId, mx, my);
+                placingId = 0;
+                break;
+            case MODE_DELETE:
+                diagram.deleteElementInPlace(mx, my);
+                break;
+        }
     }
 }
 
 function mouseReleased() {
     diagram.discardEdited();
-    placingId = 0;
 }
 
 function setMousePos(evt) {

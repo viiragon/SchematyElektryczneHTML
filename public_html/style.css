@@ -12,6 +12,8 @@ canvas {
 }
 #plane {
     position: relative;
+    width: 100%;
+    height: 100%;
 }
 #drawLayer { z-index: 2 }
 #backgroundLayer { z-index: 1 }

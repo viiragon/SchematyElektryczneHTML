@@ -335,6 +335,7 @@ function Joint(x, y) {
             ctx.stroke();
         } else {
             var d = snapDistance / 2;
+            ctx.beginPath();
             ctx.lineWidth = d / 2;
             ctx.moveTo(x - d, y - d);
             ctx.lineTo(x + d, y + d);

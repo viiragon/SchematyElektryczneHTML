@@ -38,6 +38,8 @@ function Diagram(width, height) {
     this.joints = [new Joint(Math.floor((width / 3) / scale) * scale, Math.floor((height / 2) / scale) * scale)
                 , new Joint(Math.floor((2 * width / 3) / scale) * scale, Math.floor((height / 2) / scale) * scale)];
     this.elements = [];
+    this.GUI = [new ToolsAppearer(this.width, this.height, true)];
+
     this.placer = new LinePlacer();
 
     this.joints[0].id = 0;
@@ -79,6 +81,15 @@ function Diagram(width, height) {
                 }
             }
         }
+    };
+
+    this.checkGUIInPlace = function (x, y) {
+        for (var i = 0; i < this.GUI.length; i++) {
+            if (this.GUI[i].onClick(x, y)) {
+                return true;
+            }
+        }
+        return false;
     };
 
     this.addElement = function (element) {
@@ -197,18 +208,27 @@ function Diagram(width, height) {
         lc.clearRect(0, 0, l.width, l.height);
     };
 
+    this.refreshColors = function (ctx) {
+        ctx.fillStyle = 'black';
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 1;
+    };
+
     this.drawBackground = function (bgl, bgc) {
         this.clearScreen(bgl, bgc);
         for (var i = 0; i < this.joints.length; i++) {
             this.joints[i].drawMe(bgl, bgc);
+            this.refreshColors(bgc);
         }
         for (var i = 0; i < this.elements.length; i++) {
             this.elements[i].drawMe(bgl, bgc);
+            this.refreshColors(bgc);
         }
     };
 
     this.drawWorkingLayer = function (dl, dc, mx, my) {
         this.clearScreen(dl, dc);
+        this.refreshColors(dc);
         if (this.edited.id !== -1) {
             if (this.edited instanceof Joint) {
                 this.placer.drawMe(dl, dc);
@@ -231,6 +251,13 @@ function Diagram(width, height) {
                 this.highlightElements(dl, dc, mx, my, this.edited);
             }
         }
+        for (var i = 0; i < this.GUI.length; i++) {
+            if (this.edited.id === -1) {
+                this.GUI[i].onMouseOver(mx, my);
+            }
+            this.refreshColors(dc);
+            this.GUI[i].drawMe(dl, dc);
+        }
     };
 
     this.highlightJoints = function (dl, dc, mx, my, edited) {
@@ -238,6 +265,7 @@ function Diagram(width, height) {
         my = Math.floor(my / scale) * scale;
         for (var i = 0; i < this.joints.length; i++) {
             if (this.joints[i].id !== edited.id) {
+                this.refreshColors(dc);
                 if (this.joints[i].highlightMe(mx, my, dl, dc)) {
                     return true;
                 }
@@ -251,6 +279,7 @@ function Diagram(width, height) {
         my = Math.floor(my / scale) * scale;
         for (var i = 0; i < this.elements.length; i++) {
             if (this.elements[i].id !== edited.id) {
+                this.refreshColors(dc);
                 if (this.elements[i].highlightMe(mx, my, dl, dc)) {
                     return true;
                 }
