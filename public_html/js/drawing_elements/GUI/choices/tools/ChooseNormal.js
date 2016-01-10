@@ -4,11 +4,12 @@
  * and open the template in the editor.
  */
 
-/* global scale, MODE_JOINTS */
+/* global scale, MODE_NORMAL, snapDistance, placingId */
 
-function ChooseElement(x, y) {
+function ChooseNormal(x, y) {
     var gui = new GuiElement(x, y, 10 * scale, 10 * scale, true);
     gui.color = 'white';
+    gui.image = getImage('normalIcon');
 
     gui.myMouseOver = function (x, y) {
         gui.color = 'lightgray';
@@ -19,24 +20,28 @@ function ChooseElement(x, y) {
     };
 
     gui.myClick = function (x, y) {
-        placingId = 1;
-        mode = MODE_JOINTS;
+        mode = MODE_NORMAL;
+        placingId = 0;
     };
 
     gui.drawOnlyMe = function (c, ctx) {
         ctx.beginPath();
-        ctx.rect(this.ix, this.iy, this.width, this.height);
+        ctx.rect(this.x, this.y, this.width, this.height);
         ctx.fillStyle = this.color;
         ctx.fill();
         ctx.lineWidth = scale / 2;
         ctx.strokeStyle = 'black';
         ctx.stroke();
 
-        ctx.font = 7 * scale + "px Comic Sans MS";
-        ctx.fillStyle = "black";
-        ctx.textAlign = "center";
-        ctx.fillText("E", this.ix + this.width / 2, 
-                                    this.iy + 9 * this.height / 12);
+        ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+
+        if (mode === MODE_NORMAL && placingId === 0) {
+            ctx.beginPath();
+            ctx.rect(this.x + scale, this.y + scale, this.width - 2 * scale, this.height - 2 * scale);
+            ctx.lineWidth = scale / 2;
+            ctx.strokeStyle = 'black';
+            ctx.stroke();
+        }
     };
 
     return gui;

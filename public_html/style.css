@@ -7,6 +7,11 @@ and open the template in the editor.
     Created on : 2015-10-24, 22:08:33
     Author     : Wojtek
 */
+body {
+    margin: 0px;
+    border: 0px;
+    padding: 0px;
+}
 canvas {
     position: absolute;
 }

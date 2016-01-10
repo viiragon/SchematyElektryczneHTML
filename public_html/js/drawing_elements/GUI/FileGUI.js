@@ -6,13 +6,11 @@
 
 /* global scale */
 
-function ToolsGUI(x, y, height) {
-    var gui = new GuiElement(x, y, scale * 14, height, false);
+function FileGUI(height) {
+    var gui = new GuiElement(0, 0, scale * 23, height, false);
 
-    gui.childs = [new ChooseNormal(2 * scale, 2 * scale)
-                , new ChooseWires(2 * scale, 14 * scale)
-                , new ChooseDelete(2 * scale, 26 * scale)
-                , new ChooseElement(2 * scale, 38 * scale)];
+    gui.childs = [new ChooseSaveAsPNG(2 * scale, 2 * scale, gui.width), 
+                new ChooseBackground(2 * scale, 9 * scale, gui.width)];
 
     gui.drawOnlyMe = function (c, ctx) {
         ctx.beginPath();

@@ -248,21 +248,22 @@ function Joint(x, y) {
             if (this.joints[i] !== null) {
                 count++;
                 if (this.responsible[i]) {
+                    ctx.beginPath();
                     ctx.moveTo(this.x, this.y);
                     ctx.lineTo(this.joints[i].x, this.joints[i].y);
+                    ctx.lineWidth = scale / 4;
                     ctx.strokeStyle = 'black';
                     ctx.stroke();
                 }
             }
         }
-        if (count === 0 || count > 2) {
+        if (count === 0 || count > 2 || mode === MODE_DELETE) {
             ctx.beginPath();
             ctx.arc(this.x, this.y, scale / 2, 0, 2 * Math.PI);
             ctx.fillStyle = 'black';
             ctx.fill();
         }
         if (DEBUG) {
-            ctx.stroke();
             if (this.hasElement)
                 ctx.fillStyle = 'blue';
             else
@@ -328,7 +329,7 @@ function Joint(x, y) {
     this.drawHighlight = function (x, y, c, ctx) {
         if (mode !== MODE_DELETE) {
             ctx.beginPath();
-            ctx.arc(x, y, 4, 0, 2 * Math.PI);
+            ctx.arc(x, y, 2 * scale / 3, 0, 2 * Math.PI);
             ctx.fillStyle = 'white';
             ctx.fill();
             ctx.strokeStyle = 'blue';

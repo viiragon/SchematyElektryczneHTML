@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* global diagram, snapDistance */
+/* global diagram, snapDistance, scale */
 
 var DIR_HORIZONTAL = 0, DIR_VERTICAL = 1;
 
@@ -72,7 +72,15 @@ function LinePlacer() {
         diagram.addElement(endJoint);
         this.connect(endJoint);
     };
-    
+
+    this.clear = function () {
+        this.x = -1;
+        this.y = -1;
+        this.sx = -1;
+        this.sy = -1;
+        this.edited = null;
+    };
+
     this.edit = function (x, y) {
         if (Math.abs(x - this.edited.x) < snapDistance) {
             if ((y > this.edited.y && this.frees.down) || (y < this.edited.y && this.frees.up)) {
@@ -124,17 +132,20 @@ function LinePlacer() {
                 } else {
                     ctx.lineTo(this.edited.x, this.y);
                 }
-                ctx.strokeStyle = 'grey';
+                ctx.lineWidth = scale / 4;
+                ctx.strokeStyle = 'lightgrey';
                 ctx.stroke();
             } else {
                 ctx.moveTo(this.edited.x, this.edited.y);
                 ctx.lineTo(this.sx, this.sy);
-                ctx.strokeStyle = 'grey';
+                ctx.lineWidth = scale / 4;
+                ctx.strokeStyle = 'lightgrey';
                 ctx.stroke();
 
                 ctx.moveTo(this.sx, this.sy);
                 ctx.lineTo(this.x, this.y);
-                ctx.strokeStyle = 'grey';
+                ctx.lineWidth = scale / 4;
+                ctx.strokeStyle = 'lightgrey';
                 ctx.stroke();
             }
         }

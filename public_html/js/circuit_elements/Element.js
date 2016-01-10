@@ -7,6 +7,7 @@
 /* global diagram, scale, snapDistance, mode, MODE_DELETE */
 
 var CON_UP = 1, CON_DOWN = 3, CON_LEFT = 0, CON_RIGHT = 2;
+var TO_RADIANS = Math.PI / 2;
 
 function Element(x, y) {
     this.width = 6 * scale;
@@ -16,6 +17,7 @@ function Element(x, y) {
     this.x = x;
     this.y = y;
     this.id = -2;
+    this.direction = 0;
 
     this.setUpJoints = function () {
         var joint;
@@ -41,6 +43,7 @@ function Element(x, y) {
 
     this.rotate = function () {
         var tmp;
+        this.direction = (this.direction + 1) % 4;
         for (var i = 0; i < this.joints.length; i++) {
             tmp = this.placements[2 * i];
             this.placements[2 * i] = -this.placements[2 * i + 1];

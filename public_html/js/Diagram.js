@@ -10,7 +10,7 @@ var JOINT_ELEMENT = 0, NORMAL_ELEMENT = 1;
 
 var mode = 0;
 
-var MODE_JOINTS = 0, MODE_DELETE = 1, MODE_MOVE = 2;
+var MODE_NORMAL = 0, MODE_JOINTS = 1, MODE_DELETE = 2, MODE_MOVE = 3;
 
 var nullElement = {
     id: -1
@@ -33,18 +33,13 @@ function Diagram(width, height) {
     this.selected = nullElement;
 
     this.elementId = 0;
-    this.jointId = 2;
+    this.jointId = 0;
 
-    this.joints = [new Joint(Math.floor((width / 3) / scale) * scale, Math.floor((height / 2) / scale) * scale)
-                , new Joint(Math.floor((2 * width / 3) / scale) * scale, Math.floor((height / 2) / scale) * scale)];
+    this.joints = [];
     this.elements = [];
-    this.GUI = [new ToolsAppearer(this.width, this.height, true)];
+    this.GUI = [new ToolsAppearer(this.width, this.height), new FileGUIAppearer(this.height)];
 
     this.placer = new LinePlacer();
-
-    this.joints[0].id = 0;
-    this.joints[1].id = 1;
-    this.joints[0].connect(this.joints[1]);
 
     this.addElementInPlace = function (code, x, y) {
         var element = null;
@@ -57,13 +52,24 @@ function Diagram(width, height) {
                 }
                 break;
             case NORMAL_ELEMENT:
-                element = new TmpElement(x, y);
+                element = new Diode(x, y);
                 break;
         }
         if (element !== null) {
             this.edited = element;
             this.addElementEdited(element);
         }
+    };
+
+    this.addJointInPlace = function (x, y) {
+        var joint = this.findClosestJoint(x, y, false, this.edited);
+        if (joint.id === -1) {
+            joint = new Joint(Math.floor(x / scale) * scale
+                    , Math.floor(y / scale) * scale);
+            this.addElement(joint);
+        }
+        this.edited = joint;
+        this.placer.setEdited(joint);
     };
 
     this.deleteElementInPlace = function (x, y) {
@@ -140,6 +146,7 @@ function Diagram(width, height) {
             } else {
                 this.placer.place();
             }
+            this.placer.clear();
         } else if (this.edited instanceof Element && this.edited.isPlaceable()) {
             var joint;
             for (var i = 0; i < this.edited.joints.length; i++) {
@@ -216,6 +223,24 @@ function Diagram(width, height) {
 
     this.drawBackground = function (bgl, bgc) {
         this.clearScreen(bgl, bgc);
+        this.drawOnlyBackground(bgl, bgc);
+        this.GUI[0].drawOnlyMe(bgl, bgc);
+        this.GUI[1].drawOnlyMe(bgl, bgc);
+    };
+
+    this.drawBackgroundForImage = function (bgl, bgc, background) {
+        if (background) {
+            bgc.beginPath();
+            bgc.rect(0, 0, bgl.width, bgl.height);
+            bgc.fillStyle = 'white';
+            bgc.fill();
+        } else {
+            this.clearScreen(bgl, bgc);
+        }
+        this.drawOnlyBackground(bgl, bgc);
+    };
+
+    this.drawOnlyBackground = function (bgl, bgc) {
         for (var i = 0; i < this.joints.length; i++) {
             this.joints[i].drawMe(bgl, bgc);
             this.refreshColors(bgc);
@@ -248,7 +273,10 @@ function Diagram(width, height) {
             }
         } else {
             if (!this.highlightJoints(dl, dc, mx, my, this.edited)) {
-                this.highlightElements(dl, dc, mx, my, this.edited);
+                if (!this.highlightElements(dl, dc, mx, my, this.edited)
+                        && mode === MODE_JOINTS) {
+                    this.drawJoint(dl, dc, mx, my);
+                }
             }
         }
         for (var i = 0; i < this.GUI.length; i++) {
@@ -258,6 +286,20 @@ function Diagram(width, height) {
             this.refreshColors(dc);
             this.GUI[i].drawMe(dl, dc);
         }
+    };
+
+    this.drawJoint = function (dl, dc, mx, my) {
+        mx = Math.floor(mx / scale) * scale;
+        my = Math.floor(my / scale) * scale;
+        dc.beginPath();
+        dc.arc(mx, my, snapDistance, 0, 2 * Math.PI);
+        dc.strokeStyle = 'blue';
+        dc.stroke();
+
+        dc.beginPath();
+        dc.arc(mx, my, scale / 2, 0, 2 * Math.PI);
+        dc.fillStyle = 'black';
+        dc.fill();
     };
 
     this.highlightJoints = function (dl, dc, mx, my, edited) {

@@ -50,13 +50,13 @@ function GuiElement(x, y, width, height, visible) {
     };
 
     this.refreshPlacement = function (element) {
-        this.ix = this.x + element.ix;
-        this.iy = this.y + element.iy;
+        this.x = this.ix + element.x;
+        this.y = this.iy + element.y;
     };
 
     this.isClose = function (x, y) {
-        return x >= this.ix && x <= this.ix + this.width
-                && y >= this.iy && y <= this.iy + this.height;
+        return x >= this.x && x <= this.x + this.width
+                && y >= this.y && y <= this.y + this.height;
     };
 
     this.onMouseOver = function (x, y) {

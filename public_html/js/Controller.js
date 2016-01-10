@@ -25,21 +25,42 @@
  * ctx.drawImage(img, 10, 10);
  */
 
-/* global MODE_DELETE, MODE_JOINTS, MODE_MOVE */
+/* global MODE_DELETE, MODE_JOINTS, MODE_MOVE, MODE_NORMAL, Canvas2Image */
 
 var classList = [
     ["", "Diagram"],
     ["circuit_elements/", "Joint", "Element"],
     ["circuit_elements/element_creators/", "Diode", "TmpElement"],
     ["drawing_elements/", "LinePlacer", "GuiElement"],
-    ["drawing_elements/GUI/", "ToolsGUI", "ToolsAppearer"],
-    ["drawing_elements/GUI/choices/", "ChooseNormal", "ChooseDelete", "ChooseElement"]
+    ["drawing_elements/GUI/", "ToolsGUI", "ToolsAppearer", "FileGUI", "FileGUIAppearer"],
+    ["drawing_elements/GUI/choices/tools/", "ChooseNormal", "ChooseDelete", "ChooseElement", "ChooseWires"],
+    ["drawing_elements/GUI/choices/file/", "ChooseSaveAsPNG", "ChooseBackground"]
 ];
+
+var imageNamesList = ["wiresIcon", "normalIcon", "deleteIcon", "diodeElement", "tools", "file"];
+var imageList = [];
 
 var classNumber;
 var classLoaded = 0;
 
 var DEBUG = false;
+var ENABLE_BACKGROUND = true;
+
+loadImages();
+
+function loadImages() {
+    console.log("Number of images to load : " + imageNamesList.length);
+    for (var i = 0; i < imageNamesList.length; i++) {
+        var image = new Image();
+        image.src = "images/" + imageNamesList[i] + ".png";
+        image.name = imageNamesList[i];
+        console.log("\t" + image.name + " is loading");
+        image.onload = function () {
+            imageList.push(this);
+            console.log("\t" + this.name + " loaded");
+        };
+    }
+}
 
 window.onload = function () {
     var folder;
@@ -62,7 +83,6 @@ window.onload = function () {
             });
         }
     }
-    console.log("\n");
 };
 
 var bgl, bgc;   //Background layer object and context
@@ -75,6 +95,8 @@ var click;
 
 var placingId = 0;  //Co kładziemy
 
+var defaultFont = "Lucida Console";
+
 var keyPressed;
 var tmpMode = 0;
 
@@ -85,8 +107,8 @@ function prepareDocument() {
     dl = document.getElementById("drawLayer");
     dc = dl.getContext("2d");
     click = false;
-    plane.width = bgl.width = dl.width = $(window).width() * 0.9;
-    plane.height = bgl.height = dl.height = $(window).height() * 0.9;
+    plane.width = bgl.width = dl.width = $(window).width();
+    plane.height = bgl.height = dl.height = $(window).height();
     diagram = new Diagram(bgl.width, bgl.height);
     diagram.drawBackground(bgl, bgc);
 
@@ -98,6 +120,7 @@ function prepareDocument() {
     $("#plane").mousedown(function () {
         click = true;
         mouseClicked();
+        diagram.drawWorkingLayer(dl, dc, mx, my);
     });
     $("#plane").mouseup(function () {
         mouseReleased();
@@ -108,6 +131,7 @@ function prepareDocument() {
         if (!keyPressed) {
             keyboardPressed(evt.keyCode);
             diagram.drawWorkingLayer(dl, dc, mx, my);
+            diagram.drawBackground(bgl, bgc);
             keyPressed = true;
         }
     }, false);
@@ -115,6 +139,7 @@ function prepareDocument() {
         if (keyPressed) {
             keyboardReleased(evt.keyCode);
             diagram.drawWorkingLayer(dl, dc, mx, my);
+            diagram.drawBackground(bgl, bgc);
             keyPressed = false;
         }
     }, false);
@@ -157,9 +182,12 @@ function mouseMovement() {
 function mouseClicked() {
     if (!diagram.checkGUIInPlace(mx, my)) {
         switch (mode) {
-            case MODE_JOINTS:
+            case MODE_NORMAL:
                 diagram.addElementInPlace(placingId, mx, my);
                 placingId = 0;
+                break;
+            case MODE_JOINTS:
+                diagram.addJointInPlace(mx, my);
                 break;
             case MODE_DELETE:
                 diagram.deleteElementInPlace(mx, my);
@@ -176,4 +204,24 @@ function setMousePos(evt) {
     var rect = bgl.getBoundingClientRect();
     mx = evt.clientX - rect.left;
     my = evt.clientY - rect.top;
+}
+
+var a = false;
+
+function getImage(name) {
+    for (var i = 0; i < imageList.length; i++) {
+        if (imageList[i].name === name) {
+            return imageList[i];
+        }
+    }
+    return null;
+}
+
+function saveImage() {
+    var tmp = mode;
+    mode = MODE_NORMAL;
+    diagram.drawBackgroundForImage(bgl, bgc, ENABLE_BACKGROUND);
+    mode = tmp;
+    ReImg.fromCanvas(bgl).downloadPng();
+    diagram.drawBackground(bgl, bgc);
 }

@@ -18,8 +18,10 @@ function TmpElement(x, y) {
 
     element.drawMe = function (c, ctx) {
         for (var i = 0; i < this.joints.length; i++) {
+            ctx.beginPath();
             ctx.moveTo(this.x, this.y);
             ctx.lineTo(this.joints[i].x, this.joints[i].y);
+            ctx.lineWidth = scale / 4;
             ctx.strokeStyle = 'black';
             ctx.stroke();
         }
