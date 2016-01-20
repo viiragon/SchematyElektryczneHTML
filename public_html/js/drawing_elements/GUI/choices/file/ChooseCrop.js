@@ -4,17 +4,18 @@
  * and open the template in the editor.
  */
 
-/* global scale, MODE_NORMAL, snapDistance, defaultFont, TEXT_CHOICE */
+/* global scale, MODE_NORMAL, snapDistance, defaultFont, CROP_ELEMENT, TEXT_CHOICE */
 
-function ChooseSaveAsPNG(x, y, width) {
+function ChooseCrop(x, y, width) {
     var gui = new ChoiceTemplate(x, y, width, TEXT_CHOICE);
     
     gui.myClick = function (x, y) {
-        saveImage();
+        placingId = CROP_ELEMENT;
+        mode = MODE_NORMAL;
     };
 
     gui.getValue = function () {
-        return "Save image";
+        return "Set crop area";
     };
 
     return gui;

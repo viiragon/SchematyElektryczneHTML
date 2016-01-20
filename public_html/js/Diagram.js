@@ -4,9 +4,9 @@
  * and open the template in the editor.
  */
 
-/* global Element, DEBUG, Joint */
+/* global Element, DEBUG, Joint, ENABLE_CROPPING, placingId, Cropper */
 
-var JOINT_ELEMENT = 0, NORMAL_ELEMENT = 1;
+var JOINT_ELEMENT = 0, NORMAL_ELEMENT = 1, CROP_ELEMENT = 2;
 
 var mode = 0;
 
@@ -25,24 +25,33 @@ function distance(sx, sy, ex, ey) {
 }
 
 function Diagram(width, height) {
-    this.width = width;
-    this.height = height;
+    this.windowWidth = width;
+    this.windowHeight = height;
     scale = Math.floor(Math.min(width, height) / 120);
     snapDistance = scale * 2;
     this.edited = nullElement;
     this.selected = nullElement;
+
+    this.xoffset = 0;
+    this.yoffset = 0;
 
     this.elementId = 0;
     this.jointId = 0;
 
     this.joints = [];
     this.elements = [];
-    this.GUI = [new ToolsAppearer(this.width, this.height), new FileGUIAppearer(this.height)];
+    this.GUI = [new ToolsAppearer(this.windowWidth, this.windowHeight), new FileGUIAppearer(this.windowHeight)];
 
     this.placer = new LinePlacer();
+    this.cropper = new Cropper();
+    this.deleter = new Deleter();
 
     this.addElementInPlace = function (code, x, y) {
         var element = null;
+        if (this.xoffset !== 0 || this.yoffset !== 0) {
+            x -= this.xoffset;
+            y -= this.yoffset;
+        }
         switch (code) {
             case JOINT_ELEMENT:
                 var joint = this.findClosestJoint(x, y, false, this.edited);
@@ -54,6 +63,12 @@ function Diagram(width, height) {
             case NORMAL_ELEMENT:
                 element = new Diode(x, y);
                 break;
+            case CROP_ELEMENT:
+                x = Math.floor(x / scale) * scale;
+                y = Math.floor(y / scale) * scale;
+                this.cropper.startEdit(x, y);
+                this.edited = this.cropper;
+                break;
         }
         if (element !== null) {
             this.edited = element;
@@ -62,6 +77,10 @@ function Diagram(width, height) {
     };
 
     this.addJointInPlace = function (x, y) {
+        if (this.xoffset !== 0 || this.yoffset !== 0) {
+            x -= this.xoffset;
+            y -= this.yoffset;
+        }
         var joint = this.findClosestJoint(x, y, false, this.edited);
         if (joint.id === -1) {
             joint = new Joint(Math.floor(x / scale) * scale
@@ -73,6 +92,10 @@ function Diagram(width, height) {
     };
 
     this.deleteElementInPlace = function (x, y) {
+        if (this.xoffset !== 0 || this.yoffset !== 0) {
+            x -= this.xoffset;
+            y -= this.yoffset;
+        }
         var deleted = false;
         for (var i = 0; i < this.joints.length; i++) {
             if (this.joints[i].deleteMe(x, y)) {
@@ -83,9 +106,14 @@ function Diagram(width, height) {
         if (!deleted) {
             for (var i = 0; i < this.elements.length; i++) {
                 if (this.elements[i].deleteMe(x, y)) {
+                    deleted = true;
                     break;
                 }
             }
+        }
+        if (!deleted) {
+            this.edited = this.deleter;
+            this.deleter.startEdit(x, y);
         }
     };
 
@@ -98,14 +126,32 @@ function Diagram(width, height) {
         return false;
     };
 
+    this.rotateElement = function (x, y) {
+        if (this.xoffset !== 0 || this.yoffset !== 0) {
+            x -= this.xoffset;
+            y -= this.yoffset;
+        }
+        if (this.edited.id !== -1 && this.edited instanceof Element) {
+            this.edited.rotate();
+        } else {
+            x = Math.floor(x / scale) * scale;
+            y = Math.floor(y / scale) * scale;
+            for (var i = 0; i < this.elements.length; i++) {
+                if (this.elements[i].id !== this.edited.id) {
+                    if (this.elements[i].isClose(x, y)) {
+                        this.elements[i].rotate();
+                    }
+                }
+            }
+        }
+    };
+
     this.addElement = function (element) {
         if (element instanceof Joint) {
             this.joints.push(element);
             element.id = this.jointId++;
         } else {
             this.elements.push(element);
-            for (var i = 0; i < this.elementId; i++)
-                element.rotate();
             element.id = this.elementId++;
             if (DEBUG) {
                 var joint;
@@ -127,6 +173,10 @@ function Diagram(width, height) {
     };
 
     this.moveEdited = function (x, y, dl, dc) {
+        if (this.xoffset !== 0 || this.yoffset !== 0) {
+            x -= this.xoffset;
+            y -= this.yoffset;
+        }
         x = Math.floor(x / scale) * scale;
         y = Math.floor(y / scale) * scale;
         if (this.edited.id !== -1) {
@@ -136,6 +186,49 @@ function Diagram(width, height) {
                 this.edited.setPos(x, y);
             }
         }
+    };
+
+    this.moveDiagram = function (x, y) {
+        this.xoffset = Math.min(Math.floor(x / scale) * scale, 0);
+        this.yoffset = Math.min(Math.floor(y / scale) * scale, 0);
+    };
+
+    this.setAutoCrop = function () {
+        var sx = Number.MAX_VALUE, sy = Number.MAX_VALUE;
+        var ex = 0, ey = 0;
+        var tmp;
+        for (var i = 0; i < this.joints.length; i++) {
+            tmp = this.joints[i];
+            if (tmp.x - snapDistance < sx) {
+                sx = tmp.x - snapDistance;
+            }
+            if (tmp.y - snapDistance < sy) {
+                sy = tmp.y - snapDistance;
+            }
+            if (tmp.x + snapDistance > ex) {
+                ex = tmp.x + snapDistance;
+            }
+            if (tmp.y + snapDistance > ey) {
+                ey = tmp.y + snapDistance;
+            }
+        }
+        for (var i = 0; i < this.elements.length; i++) {
+            tmp = this.elements[i];
+            if (tmp.x - tmp.width < sx) {
+                sx = tmp.x - tmp.width;
+            }
+            if (tmp.y - tmp.width < sy) {
+                sy = tmp.y - tmp.width;
+            }
+            if (tmp.x + tmp.width > ex) {
+                ex = tmp.x + tmp.width;
+            }
+            if (tmp.y + tmp.width > ey) {
+                ey = tmp.y + tmp.width;
+            }
+        }
+        this.cropper.startEdit(sx, sy);
+        this.cropper.setPos(ex, ey);
     };
 
     this.discardEdited = function () {
@@ -169,6 +262,34 @@ function Diagram(width, height) {
                         }
                     }
                 }
+            }
+            this.edited.placed = true;
+        } else if (this.edited instanceof Deleter && this.edited.isUsable()) {
+            var tmp;
+            var toDelete = [];
+            for (var i = 0; i < this.elements.length; i++) {
+                tmp = this.elements[i];
+                if (tmp.x > this.edited.getXStart() && tmp.x < this.edited.getXEnd()
+                        && tmp.y > this.edited.getYStart() && tmp.y < this.edited.getYEnd()) {
+                    toDelete.push(tmp);
+                }
+            }
+            for (var i = 0; i < this.joints.length; i++) {
+                tmp = this.joints[i];
+                if (tmp.x > this.edited.getXStart() && tmp.x < this.edited.getXEnd()
+                        && tmp.y > this.edited.getYStart() && tmp.y < this.edited.getYEnd()) {
+                    toDelete.push(tmp);
+                } else {
+                    //console.log(tmp.id);
+                    tmp.deleteMe(this.edited.getXStart(), tmp.y);
+                    tmp.deleteMe(this.edited.getXEnd(), tmp.y);
+                    tmp.deleteMe(tmp.x, this.edited.getYStart());
+                    tmp.deleteMe(tmp.x, this.edited.getYEnd());
+                }
+            }
+            for (var i = 0; i < toDelete.length; i++) {
+                tmp = toDelete[i];
+                tmp.deleteMe(tmp.x, tmp.y);
             }
         }
         this.selected = this.edited;
@@ -215,20 +336,25 @@ function Diagram(width, height) {
         lc.clearRect(0, 0, l.width, l.height);
     };
 
-    this.refreshColors = function (ctx) {
-        ctx.fillStyle = 'black';
-        ctx.strokeStyle = 'black';
-        ctx.lineWidth = 1;
-    };
-
     this.drawBackground = function (bgl, bgc) {
+        bgc.save();
         this.clearScreen(bgl, bgc);
+        if (this.xoffset !== 0 || this.yoffset !== 0) {
+            bgc.translate(this.xoffset, this.yoffset);
+        }
         this.drawOnlyBackground(bgl, bgc);
+        this.cropper.drawMe(bgl, bgc);
+        bgc.restore();
         this.GUI[0].drawOnlyMe(bgl, bgc);
         this.GUI[1].drawOnlyMe(bgl, bgc);
     };
 
     this.drawBackgroundForImage = function (bgl, bgc, background) {
+        if (ENABLE_CROPPING && this.cropper.isUsable()) {
+            bgl.width = this.cropper.getWidth();
+            bgl.height = this.cropper.getHeight();
+        }
+        bgc.save();
         if (background) {
             bgc.beginPath();
             bgc.rect(0, 0, bgl.width, bgl.height);
@@ -237,23 +363,32 @@ function Diagram(width, height) {
         } else {
             this.clearScreen(bgl, bgc);
         }
+        if (ENABLE_CROPPING && this.cropper.isUsable()) {
+            bgc.translate(-this.cropper.getXStart(), -this.cropper.getYStart());
+        }
         this.drawOnlyBackground(bgl, bgc);
+        bgc.restore();
     };
 
     this.drawOnlyBackground = function (bgl, bgc) {
         for (var i = 0; i < this.joints.length; i++) {
             this.joints[i].drawMe(bgl, bgc);
-            this.refreshColors(bgc);
         }
         for (var i = 0; i < this.elements.length; i++) {
-            this.elements[i].drawMe(bgl, bgc);
-            this.refreshColors(bgc);
+            if (this.elements[i].placed) {
+                this.elements[i].drawMe(bgl, bgc);
+            }
         }
     };
 
     this.drawWorkingLayer = function (dl, dc, mx, my) {
+        dc.save();
         this.clearScreen(dl, dc);
-        this.refreshColors(dc);
+        if (this.xoffset !== 0 || this.yoffset !== 0) {
+            dc.translate(this.xoffset, this.yoffset);
+            mx -= this.xoffset;
+            my -= this.yoffset;
+        }
         if (this.edited.id !== -1) {
             if (this.edited instanceof Joint) {
                 this.placer.drawMe(dl, dc);
@@ -269,7 +404,9 @@ function Diagram(width, height) {
                 }
             } else {
                 this.edited.drawMe(dl, dc);
-                this.highlightJoints(dl, dc, this.edited.x, this.edited.y, this.edited);
+                if (!this.edited instanceof Cropper && !this.edited instanceof Deleter) {
+                    this.highlightJoints(dl, dc, this.edited.x, this.edited.y, this.edited);
+                }
             }
         } else {
             if (!this.highlightJoints(dl, dc, mx, my, this.edited)) {
@@ -279,13 +416,18 @@ function Diagram(width, height) {
                 }
             }
         }
+        dc.restore();
+        if (this.xoffset !== 0 || this.yoffset !== 0) {
+            mx += this.xoffset;
+            my += this.yoffset;
+        }
         for (var i = 0; i < this.GUI.length; i++) {
             if (this.edited.id === -1) {
                 this.GUI[i].onMouseOver(mx, my);
             }
-            this.refreshColors(dc);
             this.GUI[i].drawMe(dl, dc);
         }
+        this.drawCursor(dl, dc, mx, my);
     };
 
     this.drawJoint = function (dl, dc, mx, my) {
@@ -294,6 +436,7 @@ function Diagram(width, height) {
         dc.beginPath();
         dc.arc(mx, my, snapDistance, 0, 2 * Math.PI);
         dc.strokeStyle = 'blue';
+        dc.lineWidth = scale / 4;
         dc.stroke();
 
         dc.beginPath();
@@ -302,12 +445,22 @@ function Diagram(width, height) {
         dc.fill();
     };
 
+    this.drawCursor = function (dl, dc, mx, my) {
+        if (placingId === CROP_ELEMENT || mode === MODE_MOVE) {
+            mx = Math.floor(mx / scale) * scale;
+            my = Math.floor(my / scale) * scale;
+            dc.beginPath();
+            dc.arc(mx, my, scale / 2, 0, 2 * Math.PI);
+            dc.fillStyle = mode !== MODE_MOVE ? '#7DDEFF' : '#0F2CFF';
+            dc.fill();
+        }
+    };
+
     this.highlightJoints = function (dl, dc, mx, my, edited) {
         mx = Math.floor(mx / scale) * scale;
         my = Math.floor(my / scale) * scale;
         for (var i = 0; i < this.joints.length; i++) {
             if (this.joints[i].id !== edited.id) {
-                this.refreshColors(dc);
                 if (this.joints[i].highlightMe(mx, my, dl, dc)) {
                     return true;
                 }
@@ -321,7 +474,6 @@ function Diagram(width, height) {
         my = Math.floor(my / scale) * scale;
         for (var i = 0; i < this.elements.length; i++) {
             if (this.elements[i].id !== edited.id) {
-                this.refreshColors(dc);
                 if (this.elements[i].highlightMe(mx, my, dl, dc)) {
                     return true;
                 }

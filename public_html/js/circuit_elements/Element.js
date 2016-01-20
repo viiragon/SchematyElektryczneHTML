@@ -6,7 +6,6 @@
 
 /* global diagram, scale, snapDistance, mode, MODE_DELETE */
 
-var CON_UP = 1, CON_DOWN = 3, CON_LEFT = 0, CON_RIGHT = 2;
 var TO_RADIANS = Math.PI / 2;
 
 function Element(x, y) {
@@ -18,6 +17,8 @@ function Element(x, y) {
     this.y = y;
     this.id = -2;
     this.direction = 0;
+    this.placed = false;
+    this.doubleRotatable = false;
 
     this.setUpJoints = function () {
         var joint;
@@ -42,19 +43,27 @@ function Element(x, y) {
     };
 
     this.rotate = function () {
-        var tmp;
-        this.direction = (this.direction + 1) % 4;
-        for (var i = 0; i < this.joints.length; i++) {
-            tmp = this.placements[2 * i];
-            this.placements[2 * i] = -this.placements[2 * i + 1];
-            this.placements[2 * i + 1] = tmp;
+        if (!this.placed) {
+            var tmp;
+            this.direction = (this.direction + 1) % 4;
+            for (var i = 0; i < this.joints.length; i++) {
+                tmp = this.placements[2 * i];
+                this.placements[2 * i] = this.placements[2 * i + 1];
+                this.placements[2 * i + 1] = -tmp;
+                this.joints[i].setPos(this.x + this.placements[2 * i], this.y + this.placements[2 * i + 1]);
 
-            this.joints[i].joints[this.attachments[i]] = null;
-            this.joints[i].responsible[this.attachments[i]] = false;
+                this.joints[i].joints[this.attachments[i]] = null;
+                this.joints[i].responsible[this.attachments[i]] = false;
 
-            this.attachments[i] = (this.attachments[i] + 1) % 4;
-            this.joints[i].joints[this.attachments[i]] = this;
-            this.joints[i].responsible[this.attachments[i]] = false;
+                this.attachments[i] = (this.attachments[i] - 1) % 4;
+                if (this.attachments[i] < 0) {
+                    this.attachments[i] += 4;
+                }
+                this.joints[i].joints[this.attachments[i]] = this;
+                this.joints[i].responsible[this.attachments[i]] = false;
+            }
+        } else if (this.doubleRotatable) {
+            this.direction = (this.direction + 2) % 4;
         }
     };
 
@@ -94,12 +103,17 @@ function Element(x, y) {
         }
     };
 
+    this.isClose = function (x, y) {
+        return distance(x, y, this.x, this.y) < this.width / 2;
+    };
+
     this.highlightMe = function (x, y, c, ctx) {
-        if (distance(x, y, this.x, this.y) < this.width / 2) {
+        if (this.isClose(x, y)) {
             if (mode !== MODE_DELETE) {
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.width / 2.5, 0, 2 * Math.PI);
                 ctx.strokeStyle = 'blue';
+                ctx.lineWidth = scale / 4;
                 ctx.stroke();
             } else {
                 var d = this.width / 3;
@@ -119,9 +133,9 @@ function Element(x, y) {
         }
         return false;
     };
-    
+
     this.deleteMe = function (x, y) {
-        if (distance(x, y, this.x, this.y) < this.width / 2) {
+        if (this.isClose(x, y)) {
             for (var i = 0; i < this.joints.length; i++) {
                 if (this.joints[i].numberConnected() > 1) {
                     this.joints[i].detachOther(this);

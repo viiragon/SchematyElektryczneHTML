@@ -6,11 +6,9 @@ window.ReImg = {
             return encodedData.indexOf('data:image/png') === 0;
         };
 
-        var downloadImage = function(data, filename) {
-            var a = document.createElement('a');
+        var downloadImage = function(data) {
+            var a = document.getElementById("download");
             a.href = data;
-            a.download = filename;
-            document.body.appendChild(a);
             a.click();
         };
 
@@ -62,13 +60,13 @@ window.ReImg = {
             downloadPng: function() {
                 if (isPng()) {
                     // it's a canvas already
-                    downloadImage(encodedData, 'image.png');
+                    downloadImage(encodedData);
                     return;
                 }
 
                 // convert to canvas first
                 this.toCanvas(function(canvas) {
-                    downloadImage(canvas.toDataURL(), 'image.png');
+                    downloadImage(canvas.toDataURL());
                 });
             }
         };

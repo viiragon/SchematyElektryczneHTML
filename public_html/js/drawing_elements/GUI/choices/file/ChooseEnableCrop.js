@@ -6,19 +6,19 @@
 
 /* global scale, MODE_NORMAL, snapDistance, defaultFont, CHECKBOX_CHOICE */
 
-function ChooseBackground(x, y, width) {
+function ChooseEnableCrop(x, y, width) {
     var gui = new ChoiceTemplate(x, y, width, CHECKBOX_CHOICE);
     
     gui.myClick = function (x, y) {
-        ENABLE_BACKGROUND = !ENABLE_BACKGROUND;
+        ENABLE_CROPPING = !ENABLE_CROPPING;
     };
     
     gui.getCondition = function () {
-        return ENABLE_BACKGROUND;
+        return ENABLE_CROPPING;
     };
     
     gui.getValue = function () {
-        return "Background";
+        return "Cropping";
     };
 
     return gui;

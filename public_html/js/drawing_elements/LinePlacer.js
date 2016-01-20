@@ -125,6 +125,8 @@ function LinePlacer() {
 
     this.drawMe = function (c, ctx) {
         if (this.isPlaceable()) {
+            ctx.save();
+            ctx.setLineDash([scale, scale]);
             if (this.sx === 0 && this.sy === 0) {
                 ctx.moveTo(this.edited.x, this.edited.y);
                 if (this.direction === DIR_HORIZONTAL) {
@@ -148,6 +150,7 @@ function LinePlacer() {
                 ctx.strokeStyle = 'lightgrey';
                 ctx.stroke();
             }
+            ctx.restore();
         }
     };
 }

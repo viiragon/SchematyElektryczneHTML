@@ -15,6 +15,7 @@ function Diode(x, y) {
     element.attachments = [CON_RIGHT, CON_LEFT];
     element.setUpJoints();
     element.image = getImage('diodeElement');
+    element.doubleRotatable = true;
 
     element.drawMe = function (c, ctx) {
         for (var i = 0; i < this.joints.length; i++) {

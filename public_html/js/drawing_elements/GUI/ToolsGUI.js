@@ -12,7 +12,8 @@ function ToolsGUI(x, y, height) {
     gui.childs = [new ChooseNormal(2 * scale, 2 * scale)
                 , new ChooseWires(2 * scale, 14 * scale)
                 , new ChooseDelete(2 * scale, 26 * scale)
-                , new ChooseElement(2 * scale, 38 * scale)];
+                , new ChooseMoving(2 * scale, 38 * scale)
+                , new ChooseElement(2 * scale, 50 * scale)];
 
     gui.drawOnlyMe = function (c, ctx) {
         ctx.beginPath();

@@ -6,7 +6,7 @@
 
 /* global diagram, DEBUG, snapDistance, mode, MODE_DELETE, scale */
 
-var CON_UP = 1, CON_DOWN = 3, CON_LEFT = 2, CON_RIGHT = 0;
+var CON_UP = 1, CON_DOWN = 3, CON_LEFT = 0, CON_RIGHT = 2;
 
 function Joint(x, y) {
     this.joints = [null, null, null, null];
@@ -297,7 +297,7 @@ function Joint(x, y) {
     };
 
     this.deleteMe = function (x, y) {
-        if (this.isCloseAndFree(x, y)) {
+        if (this.isClose(x, y)) {
             if (mode === MODE_DELETE && this.hasElement) {
                 return false;
             }
@@ -332,6 +332,7 @@ function Joint(x, y) {
             ctx.arc(x, y, 2 * scale / 3, 0, 2 * Math.PI);
             ctx.fillStyle = 'white';
             ctx.fill();
+            ctx.lineWidth = scale / 4;
             ctx.strokeStyle = 'blue';
             ctx.stroke();
         } else {
@@ -347,7 +348,6 @@ function Joint(x, y) {
             ctx.lineTo(x + d, y - d);
             ctx.strokeStyle = 'red';
             ctx.stroke();
-            ctx.lineWidth = 1;
         }
     };
 }
