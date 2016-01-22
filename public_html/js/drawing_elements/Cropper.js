@@ -58,6 +58,15 @@ function Cropper() {
             ctx.restore();
         }
     };
+
+    this.saveMe = function () {
+        if (this.isUsable()) {
+            return (this.x / scale) + ":" + (this.y / scale) + ":"
+                    + (this.ex / scale) + ":" + (this.ey / scale);
+        } else {
+            return "-";
+        }
+    };
 }
 
 

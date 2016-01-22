@@ -8,7 +8,7 @@
 
 var TO_RADIANS = Math.PI / 2;
 
-function Element(x, y) {
+function Element(x, y, name) {
     this.width = 6 * scale;
     this.joints = [];
     this.placements = [];
@@ -19,6 +19,8 @@ function Element(x, y) {
     this.direction = 0;
     this.placed = false;
     this.doubleRotatable = false;
+    this.name = name;
+    this.image = getImage(name + "Element");
 
     this.setUpJoints = function () {
         var joint;
@@ -30,7 +32,6 @@ function Element(x, y) {
             joint.responsible[this.attachments[i]] = false;
             joint.hasElement = true;
             this.joints.push(joint);
-            diagram.addElement(joint);
         }
     };
 
@@ -149,6 +150,18 @@ function Element(x, y) {
             return true;
         }
         return false;
+    };
+    
+    this.saveMe = function () {
+        var joints = "";
+        for (var i = 0; i < this.joints.length; i++) {
+            joints += this.joints[i].id;
+            if (i !== this.joints.length - 1) {
+                joints += "|";
+            }
+        }
+        return "e:" + this.id + ":" + this.name + ":" + (this.x / scale) + ":" + (this.y / scale)
+                + ":" + this.direction + ":" + joints;
     };
 
     this.drawMe = function (c, ctx) {

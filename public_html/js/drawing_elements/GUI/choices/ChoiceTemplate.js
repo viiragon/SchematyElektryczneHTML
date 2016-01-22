@@ -13,7 +13,7 @@ function ChoiceTemplate(x, y, width, type) {
     if (type === BIG_CHOICE) {
         gui = new GuiElement(x, y, width, width, true);
     } else {
-        gui = new GuiElement(x, y, width - 4 * scale, 5 * scale, true);
+        gui = new GuiElement(x, y, width - 4 * scale, type === TEXT_CHOICE ? 5 * scale : 3 * scale, true);
     }
     gui.color = 'white';
 
@@ -55,7 +55,9 @@ function ChoiceTemplate(x, y, width, type) {
             ctx.strokeStyle = 'black';
             ctx.stroke();
 
-            ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+            if (this.image !== null) {
+                ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+            }
 
             if (this.getCondition()) {
                 ctx.beginPath();
@@ -79,13 +81,13 @@ function ChoiceTemplate(x, y, width, type) {
                 var d = 3 * scale;
                 ctx.beginPath();
                 ctx.lineWidth = scale / 2;
-                ctx.moveTo(x, y);
-                ctx.lineTo(x + d, y + d);
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x + d, this.y + d);
                 ctx.strokeStyle = 'black';
                 ctx.stroke();
 
-                ctx.moveTo(x, y + d);
-                ctx.lineTo(x + d, y);
+                ctx.moveTo(this.x, this.y + d);
+                ctx.lineTo(this.x + d, this.y);
                 ctx.strokeStyle = 'black';
                 ctx.stroke();
                 ctx.lineWidth = 1;

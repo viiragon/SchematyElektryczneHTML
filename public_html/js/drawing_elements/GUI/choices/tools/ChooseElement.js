@@ -8,15 +8,22 @@
 
 function ChooseElement(x, y) {
     var gui = new ChoiceTemplate(x, y, 10 * scale, BIG_CHOICE);
+    gui.element = "diode";
     gui.image = getImage('diodeElement');
 
     gui.myClick = function (x, y) {
         placingId = 1;
         mode = MODE_NORMAL;
+        placingElement = this.element;
     };
-    
+
     gui.getCondition = function () {
         return mode === MODE_NORMAL && placingId > 0;
+    };
+
+    gui.setElement = function (name) {
+        this.element = name;
+        this.image = getImage(name + 'Element');
     };
 
     return gui;

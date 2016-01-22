@@ -7,14 +7,13 @@
 /* global scale, CON_RIGHT, CON_LEFT, CON_UP, CON_DOWN, TO_RADIANS */
 
 function Diode(x, y) {
-    var element = new Element(x, y);
+    var element = new Element(x, y, "diode");
 
     element.width = 8 * scale;
     element.placements = [-scale * 4, 0,
         scale * 4, 0];
     element.attachments = [CON_RIGHT, CON_LEFT];
     element.setUpJoints();
-    element.image = getImage('diodeElement');
     element.doubleRotatable = true;
 
     element.drawMe = function (c, ctx) {

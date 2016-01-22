@@ -7,7 +7,7 @@
 /* global scale, CON_RIGHT, CON_LEFT, CON_UP, CON_DOWN */
 
 function TmpElement(x, y) {
-    var element = new Element(x, y);
+    var element = new Element(x, y, "diode");
 
     element.width = 12 * scale;
     element.placements = [-scale * 6, 0,

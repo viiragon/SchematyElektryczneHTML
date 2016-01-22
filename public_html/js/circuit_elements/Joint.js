@@ -325,6 +325,10 @@ function Joint(x, y) {
         }
         return false;
     };
+    
+    this.cutLines = function (x, y, ex, ey) {
+        return false;
+    };
 
     this.drawHighlight = function (x, y, c, ctx) {
         if (mode !== MODE_DELETE) {
@@ -349,6 +353,22 @@ function Joint(x, y) {
             ctx.strokeStyle = 'red';
             ctx.stroke();
         }
+    };
+    
+    this.saveMe = function () {
+        var attachments = "";
+        for (var i = 0; i < 4; i++) {
+            if (this.joints[i] !== null) {
+                attachments += this.joints[i].id;
+            } else {
+                attachments += "-";
+            }
+            if (i !== 3) {
+                attachments += "|";
+            }
+        }
+        return "j:" + this.id + ":" + (this.x / scale) + ":" + (this.y / scale)
+                + ":" + attachments + ":" + (this.hasElement ? "1" : "0");
     };
 }
 

@@ -1,63 +1,29 @@
 window.ReImg = {
+    OutputProcessor: function (encodedData, svgElement) {
 
-    OutputProcessor: function(encodedData, svgElement) {
-
-        var isPng = function() {
+        var isPng = function () {
             return encodedData.indexOf('data:image/png') === 0;
         };
 
-        var downloadImage = function(data) {
+        var downloadImage = function (data) {
             var a = document.getElementById("download");
             a.href = data;
+            a.download = "image.png";
             a.click();
+            a.href = "";
+        };
+
+        var downloadFile = function (data) {
+            var a = document.getElementById("download");
+            var blob = new Blob([data], {type:'text/plain'});
+            a.href = window.URL.createObjectURL(blob);
+            a.download = "diagram.txt";
+            a.click();
+            a.href = "";
         };
 
         return {
-            toBase64: function() {
-                return encodedData;
-            },
-            toImg: function() {
-                var imgElement = document.createElement('img');
-                imgElement.src = encodedData;
-                return imgElement;
-            },
-            toCanvas: function(callback) {
-                var canvas = document.createElement('canvas');
-                var boundedRect = svgElement.getBoundingClientRect();
-                canvas.width = boundedRect.width;
-                canvas.height = boundedRect.height;
-                var canvasCtx = canvas.getContext('2d');
-
-                var img = this.toImg();
-                img.onload = function() {
-                    canvasCtx.drawImage(img, 0, 0);
-                    callback(canvas);
-                };
-            },
-            toPng: function() {
-                if (isPng()) {
-                    var img = document.createElement('img');
-                    img.src = encodedData;
-                    return img;
-                }
-
-                this.toCanvas(function(canvas) {
-                    var img = document.createElement('img');
-                    img.src = canvas.toDataURL();
-                    return img;
-                });
-            },
-            toJpeg: function(quality) { // quality should be between 0-1
-                quality = quality || 1.0;
-                (function(q) {
-                    this.toCanvas(function(canvas) {
-                        var img = document.createElement('img');
-                        img.src = canvas.toDataURL('image/jpeg', q);
-                        return img;
-                    });
-                })(quality);
-            },
-            downloadPng: function() {
+            downloadPng: function () {
                 if (isPng()) {
                     // it's a canvas already
                     downloadImage(encodedData);
@@ -65,21 +31,21 @@ window.ReImg = {
                 }
 
                 // convert to canvas first
-                this.toCanvas(function(canvas) {
+                this.toCanvas(function (canvas) {
                     downloadImage(canvas.toDataURL());
                 });
+            },
+            downloadFile: function () {
+                downloadFile(encodedData);
             }
         };
     },
-
-    fromSvg: function(svgElement) {
-        var svgString = new XMLSerializer().serializeToString(svgElement);
-        return new this.OutputProcessor('data:image/svg+xml;base64,' + window.btoa(svgString), svgElement);
-    },
-
-    fromCanvas: function(canvasElement) {
+    fromCanvas: function (canvasElement) {
         var dataUrl = canvasElement.toDataURL();
         return new this.OutputProcessor(dataUrl);
+    },
+    fromDiagram: function (data) {
+        return new this.OutputProcessor(data);
     }
 
 };

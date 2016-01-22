@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* global Element, DEBUG, Joint, ENABLE_CROPPING, placingId, Cropper */
+/* global Element, DEBUG, Joint, ENABLE_CROPPING, placingId, Cropper, Deleter */
 
 var JOINT_ELEMENT = 0, NORMAL_ELEMENT = 1, CROP_ELEMENT = 2;
 
@@ -15,6 +15,8 @@ var MODE_NORMAL = 0, MODE_JOINTS = 1, MODE_DELETE = 2, MODE_MOVE = 3;
 var nullElement = {
     id: -1
 };
+
+var placingElement = "";
 
 var snapDistance; //Odległość po której obiekt jest wychwytywany (scale * 2)
 
@@ -61,7 +63,9 @@ function Diagram(width, height) {
                 }
                 break;
             case NORMAL_ELEMENT:
-                element = new Diode(x, y);
+                if (placingElement !== "") {
+                    element = getElementFromName(placingElement, x, y);
+                }
                 break;
             case CROP_ELEMENT:
                 x = Math.floor(x / scale) * scale;
@@ -153,6 +157,9 @@ function Diagram(width, height) {
         } else {
             this.elements.push(element);
             element.id = this.elementId++;
+            for (var i = 0; i < element.joints.length; i++) {
+                this.addElement(element.joints[i]);
+            }
             if (DEBUG) {
                 var joint;
                 for (var i = 0; i < element.joints.length; i++) {
@@ -194,52 +201,70 @@ function Diagram(width, height) {
     };
 
     this.setAutoCrop = function () {
-        var sx = Number.MAX_VALUE, sy = Number.MAX_VALUE;
-        var ex = 0, ey = 0;
-        var tmp;
-        for (var i = 0; i < this.joints.length; i++) {
-            tmp = this.joints[i];
-            if (tmp.x - snapDistance < sx) {
-                sx = tmp.x - snapDistance;
+        if (this.joints.length + this.elements.length > 0) {
+            var sx = Number.MAX_VALUE, sy = Number.MAX_VALUE;
+            var ex = 0, ey = 0;
+            var tmp;
+            for (var i = 0; i < this.joints.length; i++) {
+                tmp = this.joints[i];
+                if (tmp.x - snapDistance < sx) {
+                    sx = tmp.x - snapDistance;
+                }
+                if (tmp.y - snapDistance < sy) {
+                    sy = tmp.y - snapDistance;
+                }
+                if (tmp.x + snapDistance > ex) {
+                    ex = tmp.x + snapDistance;
+                }
+                if (tmp.y + snapDistance > ey) {
+                    ey = tmp.y + snapDistance;
+                }
             }
-            if (tmp.y - snapDistance < sy) {
-                sy = tmp.y - snapDistance;
+            for (var i = 0; i < this.elements.length; i++) {
+                tmp = this.elements[i];
+                if (tmp.x - tmp.width < sx) {
+                    sx = tmp.x - tmp.width;
+                }
+                if (tmp.y - tmp.width < sy) {
+                    sy = tmp.y - tmp.width;
+                }
+                if (tmp.x + tmp.width > ex) {
+                    ex = tmp.x + tmp.width;
+                }
+                if (tmp.y + tmp.width > ey) {
+                    ey = tmp.y + tmp.width;
+                }
             }
-            if (tmp.x + snapDistance > ex) {
-                ex = tmp.x + snapDistance;
-            }
-            if (tmp.y + snapDistance > ey) {
-                ey = tmp.y + snapDistance;
-            }
+            this.cropper.startEdit(sx, sy);
+            this.cropper.setPos(ex, ey);
         }
-        for (var i = 0; i < this.elements.length; i++) {
-            tmp = this.elements[i];
-            if (tmp.x - tmp.width < sx) {
-                sx = tmp.x - tmp.width;
-            }
-            if (tmp.y - tmp.width < sy) {
-                sy = tmp.y - tmp.width;
-            }
-            if (tmp.x + tmp.width > ex) {
-                ex = tmp.x + tmp.width;
-            }
-            if (tmp.y + tmp.width > ey) {
-                ey = tmp.y + tmp.width;
-            }
-        }
-        this.cropper.startEdit(sx, sy);
-        this.cropper.setPos(ex, ey);
+    };
+
+    this.clear = function () {
+        this.edited = nullElement;
+        this.selected = nullElement;
+        this.xoffset = 0;
+        this.yoffset = 0;
+        this.elementId = 0;
+        this.jointId = 0;
+        this.joints = [];
+        this.elements = [];
+        this.cropper.startEdit(-1, -1);
     };
 
     this.discardEdited = function () {
-        if (this.edited instanceof Joint && this.placer.isPlaceable()) {
-            var joint = this.findClosestJoint(this.placer.x, this.placer.y, false, this.edited);
-            if (joint.id !== -1) {
-                this.placer.connect(joint);
+        if (this.edited instanceof Joint) {
+            if (this.placer.isPlaceable()) {
+                var joint = this.findClosestJoint(this.placer.x, this.placer.y, false, this.edited);
+                if (joint.id !== -1) {
+                    this.placer.connect(joint);
+                } else {
+                    this.placer.place();
+                }
+                this.placer.clear();
             } else {
-                this.placer.place();
+                this.edited.simplify();
             }
-            this.placer.clear();
         } else if (this.edited instanceof Element && this.edited.isPlaceable()) {
             var joint;
             for (var i = 0; i < this.edited.joints.length; i++) {
@@ -280,7 +305,6 @@ function Diagram(width, height) {
                         && tmp.y > this.edited.getYStart() && tmp.y < this.edited.getYEnd()) {
                     toDelete.push(tmp);
                 } else {
-                    //console.log(tmp.id);
                     tmp.deleteMe(this.edited.getXStart(), tmp.y);
                     tmp.deleteMe(this.edited.getXEnd(), tmp.y);
                     tmp.deleteMe(tmp.x, this.edited.getYStart());
@@ -328,6 +352,163 @@ function Diagram(width, height) {
         if (this.selected.id !== -1) {
             this.deleteElement(this.selected);
             this.selected = nullElement;
+        }
+    };
+
+    this.saveDiagram = function () {
+        var sep = ",";
+        var ret = "[Diagram]" + sep;
+        ret += this.jointId + ":" + this.elementId + sep;
+        ret += this.cropper.saveMe() + sep;
+        for (var i = 0; i < this.elements.length; i++) {
+            ret += this.elements[i].saveMe() + sep;
+        }
+        for (var i = 0; i < this.joints.length; i++) {
+            ret += this.joints[i].saveMe();
+            if (i !== this.joints.length - 1) {
+                ret += sep;
+            }
+        }
+        return ret;
+    };
+
+    this.loadDiagram = function (txt) {
+        var joints = [];
+        var elements = [];
+        var jointsInElements = [];
+
+        var tmpJointId, tmpElementId;
+        var cropX, cropY, cropEx, cropEy;
+        var data = txt.split(",");
+        var line;
+
+        try {
+            if (data[0] !== "[Diagram]") {
+                throw "Not a correct diagram file";
+            }
+            //READING AND ANALYZING
+            line = data[1].split(":");
+            tmpJointId = parseInt(line[0]);
+            tmpElementId = parseInt(line[1]);
+            if (data[2] !== "-") {
+                line = data[2].split(":");
+                cropX = parseInt(line[0]) * scale;
+                cropY = parseInt(line[1]) * scale;
+                cropEx = parseInt(line[2]) * scale;
+                cropEy = parseInt(line[3]) * scale;
+            } else {
+                cropX = cropY = cropEx = cropEy = -1;
+            }
+            var tmp, innerLine;
+            for (var i = 3; i < data.length; i++) {
+                line = data[i].split(":");
+                switch (line[0]) {
+                    case "e":
+                        tmp = getElementFromName(line[2], parseInt(line[3]) * scale
+                                , parseInt(line[4]) * scale);
+                        if (tmp === null) {
+                            throw "Wrong element name at line " + i;
+                        }
+                        tmp.id = parseInt(line[1]);
+                        tmp.direction = parseInt(line[5]);
+                        tmp.placed = true;
+                        innerLine = line[6].split("|");
+                        for (var j = 0; j < innerLine.length; j++) {
+                            tmp.joints[j] = parseInt(innerLine[j]);
+                        }
+                        elements.push(tmp);
+                        break;
+                    case "j":
+                        tmp = new Joint(parseInt(line[2]) * scale, parseInt(line[3]) * scale);
+                        tmp.id = parseInt(line[1]);
+                        if (line[5] === "1") {
+                            jointsInElements.push(tmp);
+                        }
+                        innerLine = line[4].split("|");
+                        for (var j = 0; j < innerLine.length; j++) {
+                            tmp.joints[j] = innerLine[j] !== "-" ? parseInt(innerLine[j]) : null;
+                        }
+                        joints.push(tmp);
+                        break;
+                    case "":
+                        break;
+                    default:
+                        throw "Unknown element '" + line[0] + "' found in line " + i;
+                        break;
+                }
+            }
+            //CONNECTING JOINTS AND ELEMENTS
+            for (var i = 0; i < elements.length; i++) {
+                tmp = elements[i];
+                for (var j = 0; j < tmp.joints.length; j++) {
+                    for (var k = 0; k < jointsInElements.length; k++) {
+                        if (jointsInElements[k].id === tmp.joints[j]) {
+                            tmp.joints[j] = jointsInElements[k];
+                            tmp.joints[j].joints[tmp.attachments[j]] = tmp;
+                            tmp.joints[j].responsible[tmp.attachments[j]] = false;
+                            tmp.joints[j].hasElement = true;
+                        }
+                    }
+                }
+            }
+            for (var i = 0; i < joints.length; i++) {
+                tmp = joints[i];
+                for (var j = 0; j < 4; j++) {
+                    innerLine = tmp.joints[j];
+                    if (innerLine !== null) {
+                        for (var k = 0; k < joints.length; k++) {
+                            if (joints[k].id === innerLine) {
+                                tmp.joints[j] = joints[k];
+                                if (tmp.id > joints[k].id) {
+                                    tmp.responsible[j] = true;
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            //TESTING
+            for (var i = 0; i < elements.length; i++) {
+                tmp = elements[i];
+                for (var j = 0; j < tmp.joints.length; j++) {
+                    if (!(tmp.joints[j] instanceof Joint)) {
+                        throw "Wrong data of element '" + tmp.name + "' id." + tmp.id;
+                    }
+                }
+            }
+            for (var i = 0; i < jointsInElements.length; i++) {
+                if (!jointsInElements[i].hasElement) {
+                    throw "Wrong data of joint id." + jointsInElements[i].id;
+                }
+            }
+            for (var i = 0; i < joints.length; i++) {
+                tmp = joints[i];
+                for (var j = 0; j < 4; j++) {
+                    if (!tmp.joints[j] instanceof Joint) {
+                        throw "Wrong data of joint id." + tmp.id;
+                    }
+                }
+            }
+            //APLLY TO THE DIAGRAM
+            this.elements = [];
+            this.joints = [];
+            this.jointId = tmpJointId;
+            this.elementId = tmpElementId;
+            this.cropper.x = cropX;
+            this.cropper.y = cropY;
+            this.cropper.ex = cropEx;
+            this.cropper.ey = cropEy;
+            for (var i = 0; i < elements.length; i++) {
+                this.elements.push(elements[i]);
+            }
+            for (var i = 0; i < joints.length; i++) {
+                this.joints.push(joints[i]);
+            }
+            console.log("File loaded");
+        } catch (err) {
+            console.log(err);
+            alert("Error while loading the file:\n" + err);
         }
     };
 

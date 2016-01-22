@@ -29,17 +29,20 @@
 
 var classList = [
     ["", "Diagram"],
-    ["circuit_elements/", "Joint", "Element"],
+    ["circuit_elements/", "Joint", "Element", "Interpreter"],
     ["circuit_elements/element_creators/", "Diode", "TmpElement"],
     ["drawing_elements/", "LinePlacer", "GuiElement", "Cropper", "Deleter"],
     ["drawing_elements/GUI/", "ToolsGUI", "ToolsAppearer", "FileGUI", "FileGUIAppearer"],
     ["drawing_elements/GUI/choices/", "ChoiceTemplate"],
     ["drawing_elements/GUI/choices/tools/", "ChooseNormal", "ChooseDelete", "ChooseElement", "ChooseWires", "ChooseMoving"],
-    ["drawing_elements/GUI/choices/file/", "ChooseSaveAsPNG", "ChooseBackground", "ChooseCrop", "ChooseEnableCrop", "ChooseAutoCrop"]
+    ["drawing_elements/GUI/choices/file/", "ChooseSaveAsPNG", "ChooseBackground", "ChooseCrop", "ChooseEnableCrop"
+                , "ChooseAutoCrop", "ChooseLoadDiagram", "ChooseSaveAsFile", "ChooseNewDiagram", "ChooseHelp"]
 ];
 
 var imageNamesList = ["wiresIcon", "normalIcon", "deleteIcon", "moveIcon", "diodeElement", "tools", "file"];
 var imageList = [];
+
+var nameToElementTable;
 
 var classNumber;
 var classLoaded = 0;
@@ -64,28 +67,48 @@ function loadImages() {
     }
 }
 
+var loading = 0;
+
 window.onload = function () {
-    var folder;
     classNumber = 0;
     for (var i = 0; i < classList.length; i++) {
         classNumber += classList[i].length - 1;
     }
     console.log("Number of classes to load : " + classNumber);
-    for (var i = 0; i < classList.length; i++) {
-        folder = classList[i];
+    loadPackage();
+};
+
+function loadPackage() {
+    if (loading < classList.length) {
+        var folder = classList[loading];
+        classNumber = classList[loading].length - 1;
+        classLoaded = 0;
         for (var j = 1; j < folder.length; j++) {
             console.log("\t" + folder[0] + folder[j] + " is loading");
-            $.getScript("js/" + folder[0] + folder[j] + ".js", function () {
-                classLoaded++;
-                console.log("\tLoaded class : " + this.url);
-                if (classLoaded === classNumber) {
-                    console.log("Page loaded!");
-                    prepareDocument();
-                }
-            });
+            $.getScript("js/" + folder[0] + folder[j] + ".js")
+                    .done(function () {
+                        classLoaded++;
+                        console.log("\tLoaded class : " + this.url + " Remaining: " + (classNumber - classLoaded));
+                        if (classLoaded === classNumber) {
+                            loading++;
+                            loadPackage(loading);
+                        }
+                    })
+                    .fail(function () {
+                        classLoaded++;
+                        console.log("\tFailed class : " + this.url + " Remaining: " + (classNumber - classLoaded));
+                        if (classLoaded === classNumber) {
+                            loading++;
+                            loadPackage();
+                        }
+                    });
         }
+    } else {
+        console.log("Page loaded!");
+        prepareDocument();
+        document.getElementById("loading").style.display = "none";
     }
-};
+}
 
 var bgl, bgc;   //Background layer object and context
 var dl, dc;     //Drawing layer object and context
@@ -116,6 +139,10 @@ function prepareDocument() {
     plane.height = bgl.height = dl.height = svl.height = $(window).height();
     diagram = new Diagram(bgl.width, bgl.height);
     diagram.drawBackground(bgl, bgc);
+
+    nameToElementTable = [
+        "diode", Diode
+    ];
 
     $("#plane").mousemove(function (evt) {
         setMousePos(evt);
@@ -149,11 +176,48 @@ function prepareDocument() {
         }
     }, false);
 
+    var files = document.getElementById("files");
+
+    files.addEventListener("change", function (evt) {
+        var file = evt.target.files[0];
+        if (file) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                diagram.loadDiagram(e.target.result);
+                diagram.drawBackground(bgl, bgc);
+            };
+            console.log("Loading file: " + file.name);
+            reader.readAsText(file);
+        } else {
+            alert("Failed to load file");
+        }
+    });
+
+    var diagramData = getCookieDiagram();
+    if (diagramData !== "") {
+        console.log("Diagram save data found in cookies. Loading cookie diagram");
+        diagram.loadDiagram(diagramData);
+        diagram.drawBackground(bgl, bgc);
+    }
+
+    $(window).on("beforeunload", function () {
+        saveDiagramToCookie();
+    });
+
     if (!bgc.setLineDash) {
         console.log("context.setLineDash is not supported in this browser - dashed lines will not work!");
         bgc.setLineDash = dc.setLineDash = svc.setLineDash = function () {
         };
     }
+}
+
+function getElementFromName(name, x, y) {
+    for (var i = 0; i < nameToElementTable.length; i += 2) {
+        if (nameToElementTable[i] === name) {
+            return new nameToElementTable[i + 1](x, y);
+        }
+    }
+    return null;
 }
 
 function keyboardPressed(key) {
@@ -169,6 +233,10 @@ function keyboardPressed(key) {
             tmpMode = mode;
             mode = MODE_DELETE;
             break;
+        case 74:    //J
+            tmpMode = mode;
+            mode = MODE_JOINTS;
+            break;
         case 82:    //R
             diagram.rotateElement(mx, my);
             break;
@@ -183,6 +251,7 @@ function keyboardReleased(key) {
         case 16:
         case 82:
         case 46:
+        case 74:
             mode = tmpMode;
             break;
     }
@@ -254,4 +323,47 @@ function saveImage() {
     svl.width = $(window).width();
     svl.height = $(window).height();
     mode = tmp;
+}
+
+
+function clearDiagram() {
+    diagram.clear();
+    diagram.drawBackground(bgl, bgc);
+}
+
+function saveDiagramToFile() {
+    ReImg.fromDiagram(diagram.saveDiagram()).downloadFile();
+}
+
+function saveDiagramToCookie() {
+    setCookieDiagram(diagram.saveDiagram());
+}
+
+function loadDiagramFromCookie() {
+    diagram.loadDiagram(getCookieDiagram());
+    diagram.drawBackground(bgl, bgc);
+}
+
+function setCookieDiagram(cvalue) {
+    var d = new Date();
+    d.setTime(d.getTime() + (3650 * 24 * 60 * 60 * 1000));  //10 lat do przodu.... :D
+    var expires = "expires=" + d.toUTCString();
+    document.cookie = "diagramSave=" + cvalue + "; " + expires;
+}
+
+function getCookieDiagram() {
+    var name = "diagramSave=";
+    var ca = document.cookie.split(';');
+    for (var i = 0; i < ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) === ' ')
+            c = c.substring(1);
+        if (c.indexOf(name) === 0)
+            return c.substring(name.length, c.length);
+    }
+    return "";
+}
+
+function deleteCookieDiagram() {
+    document.cookie = "diagramSave=; expires=Thu, 01 Jan 1970 00:00:00 UTC";
 }

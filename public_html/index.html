@@ -11,16 +11,18 @@ and open the template in the editor.
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script type="text/javascript" src="js/libs/jquery/jquery.js"></script>
         <script type="text/javascript" src="js/libs/reimg.js"></script>
-        
+
         <script type="text/javascript" src="js/Controller.js"></script>
         <link rel="stylesheet" href="style.css" type="text/css"/>
     </head>
     <body>
         <a id="download" href="data" download="image.png"></a>
         <div id="plane">
+            <input id="files" type="file" height="0">
             <canvas id="backgroundLayer"></canvas>
             <canvas id="drawLayer"></canvas>
             <canvas id="downloadLayer"></canvas>
         </div>
+        <div id="loading">LOADING...</div>
     </body>
 </html>

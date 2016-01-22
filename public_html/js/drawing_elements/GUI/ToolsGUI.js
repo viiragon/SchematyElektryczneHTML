@@ -9,11 +9,19 @@
 function ToolsGUI(x, y, height) {
     var gui = new GuiElement(x, y, scale * 14, height, false);
 
-    gui.childs = [new ChooseNormal(2 * scale, 2 * scale)
-                , new ChooseWires(2 * scale, 14 * scale)
-                , new ChooseDelete(2 * scale, 26 * scale)
-                , new ChooseMoving(2 * scale, 38 * scale)
-                , new ChooseElement(2 * scale, 50 * scale)];
+    gui.childs = [new ChooseNormal(2 * scale, 0)
+                , new ChooseWires(2 * scale, 0)
+                , new ChooseDelete(2 * scale, 0)
+                , new ChooseMoving(2 * scale, 0)
+                , new ChooseElement(2 * scale, 0)];
+
+    var delta = 2 * scale;
+    var sep = 0;
+    for (var i = 0; i < gui.childs.length; i++) {
+        sep = gui.childs[i].iy;
+        gui.childs[i].iy += delta;
+        delta += gui.childs[i].height + sep + 2 * scale;
+    }
 
     gui.drawOnlyMe = function (c, ctx) {
         ctx.beginPath();
