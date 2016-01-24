@@ -6,6 +6,8 @@
 
 /* global scale */
 
+var elementChoosers = [];
+
 function ToolsGUI(x, y, height) {
     var gui = new GuiElement(x, y, scale * 14, height, false);
 
@@ -13,7 +15,15 @@ function ToolsGUI(x, y, height) {
                 , new ChooseWires(2 * scale, 0)
                 , new ChooseDelete(2 * scale, 0)
                 , new ChooseMoving(2 * scale, 0)
+                , new ChooseElement(2 * scale, scale)
+                , new ChooseElement(2 * scale, 0)
+                , new ChooseElement(2 * scale, 0)
+                , new ChooseElement(2 * scale, 0)
                 , new ChooseElement(2 * scale, 0)];
+
+    for (var i = 4; i < gui.childs.length; i++) {
+        elementChoosers.push(gui.childs[i]);
+    }
 
     var delta = 2 * scale;
     var sep = 0;

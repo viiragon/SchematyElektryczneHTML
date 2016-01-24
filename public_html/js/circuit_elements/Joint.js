@@ -325,9 +325,77 @@ function Joint(x, y) {
         }
         return false;
     };
-    
+
     this.cutLines = function (x, y, ex, ey) {
-        return false;
+        var tmp;
+        var joint;
+        if (this.x > x && this.x < ex) {
+            if (this.y <= y) {
+                tmp = this.joints[CON_DOWN];
+                if (tmp !== null && tmp.y > y) {
+                    if (tmp.y < ey) {
+                        joint = new Joint(this.x, y);
+                        diagram.addElement(joint);
+                        this.joints[CON_DOWN] = null;
+                        tmp.joints[CON_UP] = null;
+                        this.connect(joint);
+                    } else {
+                        joint = new Joint(this.x, y);
+                        diagram.addElement(joint);
+                        this.joints[CON_DOWN] = null;
+                        tmp.joints[CON_UP] = null;
+                        this.connect(joint);
+                        joint = new Joint(this.x, ey);
+                        diagram.addElement(joint);
+                        tmp.connect(joint);
+                    }
+                }
+            } else {
+                tmp = this.joints[CON_UP];
+                if (tmp !== null && tmp.y < ey) {
+                    if (tmp.y > y) {
+                        joint = new Joint(this.x, ey);
+                        diagram.addElement(joint);
+                        this.joints[CON_UP] = null;
+                        tmp.joints[CON_DOWN] = null;
+                        this.connect(joint);
+                    }
+                }
+            }
+        } else if (this.y > y && this.y < ey) {
+            if (this.x <= x) {
+                tmp = this.joints[CON_RIGHT];
+                if (tmp !== null && tmp.x > x) {
+                    if (tmp.x < ex) {
+                        joint = new Joint(x, this.y);
+                        diagram.addElement(joint);
+                        this.joints[CON_RIGHT] = null;
+                        tmp.joints[CON_LEFT] = null;
+                        this.connect(joint);
+                    } else {
+                        joint = new Joint(x, this.y);
+                        diagram.addElement(joint);
+                        this.joints[CON_RIGHT] = null;
+                        tmp.joints[CON_LEFT] = null;
+                        this.connect(joint);
+                        joint = new Joint(ex, this.y);
+                        diagram.addElement(joint);
+                        tmp.connect(joint);
+                    }
+                }
+            } else {
+                tmp = this.joints[CON_LEFT];
+                if (tmp !== null && tmp.x < ex) {
+                    if (tmp.x > x) {
+                        joint = new Joint(ex, this.y);
+                        diagram.addElement(joint);
+                        this.joints[CON_LEFT] = null;
+                        tmp.joints[CON_RIGHT] = null;
+                        this.connect(joint);
+                    }
+                }
+            }
+        }
     };
 
     this.drawHighlight = function (x, y, c, ctx) {
@@ -354,7 +422,7 @@ function Joint(x, y) {
             ctx.stroke();
         }
     };
-    
+
     this.saveMe = function () {
         var attachments = "";
         for (var i = 0; i < 4; i++) {

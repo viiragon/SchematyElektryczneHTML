@@ -29,12 +29,13 @@
 
 var classList = [
     ["", "Diagram"],
-    ["circuit_elements/", "Joint", "Element", "Interpreter"],
+    ["circuit_elements/", "Joint", "Element"],
     ["circuit_elements/element_creators/", "Diode", "TmpElement"],
     ["drawing_elements/", "LinePlacer", "GuiElement", "Cropper", "Deleter"],
     ["drawing_elements/GUI/", "ToolsGUI", "ToolsAppearer", "FileGUI", "FileGUIAppearer"],
     ["drawing_elements/GUI/choices/", "ChoiceTemplate"],
-    ["drawing_elements/GUI/choices/tools/", "ChooseNormal", "ChooseDelete", "ChooseElement", "ChooseWires", "ChooseMoving"],
+    ["drawing_elements/GUI/choices/tools/", "ChooseNormal", "ChooseDelete", "ChooseElement", "ChooseWires", "ChooseMoving"
+                , "ListAppearer", "ListGUI"],
     ["drawing_elements/GUI/choices/file/", "ChooseSaveAsPNG", "ChooseBackground", "ChooseCrop", "ChooseEnableCrop"
                 , "ChooseAutoCrop", "ChooseLoadDiagram", "ChooseSaveAsFile", "ChooseNewDiagram", "ChooseHelp"]
 ];
@@ -239,6 +240,11 @@ function keyboardPressed(key) {
             break;
         case 82:    //R
             diagram.rotateElement(mx, my);
+            break;
+        case 67:    //C
+            if (confirm("Do you want to load a diagram from cookies?\nAny unsaved progress will be lost!")) {
+                loadDiagramFromCookie();
+            }
             break;
     }
 }

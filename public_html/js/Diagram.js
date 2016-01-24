@@ -16,7 +16,7 @@ var nullElement = {
     id: -1
 };
 
-var placingElement = "";
+var placingElement = null;
 
 var snapDistance; //Odległość po której obiekt jest wychwytywany (scale * 2)
 
@@ -63,8 +63,8 @@ function Diagram(width, height) {
                 }
                 break;
             case NORMAL_ELEMENT:
-                if (placingElement !== "") {
-                    element = getElementFromName(placingElement, x, y);
+                if (placingElement !== null) {
+                    element = placingElement.getElement(x, y);
                 }
                 break;
             case CROP_ELEMENT:
@@ -305,10 +305,8 @@ function Diagram(width, height) {
                         && tmp.y > this.edited.getYStart() && tmp.y < this.edited.getYEnd()) {
                     toDelete.push(tmp);
                 } else {
-                    tmp.deleteMe(this.edited.getXStart(), tmp.y);
-                    tmp.deleteMe(this.edited.getXEnd(), tmp.y);
-                    tmp.deleteMe(tmp.x, this.edited.getYStart());
-                    tmp.deleteMe(tmp.x, this.edited.getYEnd());
+                    tmp.cutLines(this.edited.getXStart(), this.edited.getYStart()
+                                , this.edited.getXEnd(), this.edited.getYEnd());
                 }
             }
             for (var i = 0; i < toDelete.length; i++) {

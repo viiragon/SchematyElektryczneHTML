@@ -21,15 +21,23 @@ function GuiElement(x, y, width, height, visible) {
 
     this.setUpChildren = function () {
         if (this.childs.length > 0) {
+            var int = 0;
             for (var i = 0; i < this.childs.length; i++) {
-                this.childs[i].refreshPlacement(this);
-                this.childs[i].parent = this;
-                this.childs[i].setUpChildren();
+                var child = this.childs[i];
+                if (child !== null) {
+                    child.parent = this;
+                    child.x = child.ix + this.x;
+                    child.y = child.iy + this.y;
+                    child.setUpChildren();
+                    int++;
+                }
             }
-            this.hasChildren = true;
-        } else {
-            this.hasChildren = false;
+            if (int !== 0) {
+                this.hasChildren = true;
+                return;
+            }
         }
+        this.hasChildren = false;
     };
 
     this.setPos = function (x, y) {
@@ -43,15 +51,24 @@ function GuiElement(x, y, width, height, visible) {
             this.drawOnlyMe(c, ctx);
             if (this.hasChildren) {
                 for (var i = 0; i < this.childs.length; i++) {
-                    this.childs[i].drawMe(c, ctx);
+                    if (this.childs[i] !== null) {
+                        this.childs[i].drawMe(c, ctx);
+                    }
                 }
             }
         }
     };
 
-    this.refreshPlacement = function (element) {
-        this.x = this.ix + element.x;
-        this.y = this.iy + element.y;
+    this.refreshPlacement = function () {
+        this.x = this.ix + this.parent.x;
+        this.y = this.iy + this.parent.y;
+        if (this.hasChildren) {
+            for (var i = 0; i < this.childs.length; i++) {
+                if (this.childs[i] !== null) {
+                    this.childs[i].refreshPlacement();
+                }
+            }
+        }
     };
 
     this.isClose = function (x, y) {
@@ -63,7 +80,7 @@ function GuiElement(x, y, width, height, visible) {
         if (this.visible) {
             if (this.hasChildren) {
                 for (var i = 0; i < this.childs.length; i++) {
-                    if (this.childs[i].onMouseOver(x, y)) {
+                    if (this.childs[i] !== null && this.childs[i].onMouseOver(x, y)) {
                         return true;
                     }
                 }
@@ -85,7 +102,7 @@ function GuiElement(x, y, width, height, visible) {
         if (this.visible) {
             if (this.hasChildren) {
                 for (var i = 0; i < this.childs.length; i++) {
-                    if (this.childs[i].onClick(x, y)) {
+                    if (this.childs[i] !== null && this.childs[i].onClick(x, y)) {
                         return true;
                     }
                 }
