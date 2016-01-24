@@ -6,6 +6,14 @@
 
 /* global scale, defaultFont, dc, elementChoosers, diagram */
 
+function singleElement(name, child, action) {
+    return {
+        name: name
+        , child: child
+        , action: action
+    };
+}
+
 function ListGUI(list, affected) {
     var gui = new GuiElement(-4 * scale, 0, 0, 0, false);
 
@@ -37,7 +45,6 @@ function ListGUI(list, affected) {
     gui.ix = -gui.width + 3 * scale;
 
     gui.myClick = function (x, y) {
-        console.log(this.affected);
         var num = Math.floor((y - this.y) / this.lineHeight);
         if (this.actions[num] !== null) {
             this.affected.setElement(this.actions[num]);
@@ -101,14 +108,6 @@ function ListGUI(list, affected) {
     return gui;
 }
 
-function singleElement(name, child, action) {
-    return {
-        name: name
-        , child: child
-        , action: action
-    };
-}
-
 function listCreator(affected) {
     var switches = new ListGUI([
         singleElement("SPST Toggle Switch", null, "spstToggle"),
@@ -128,8 +127,7 @@ function listCreator(affected) {
         singleElement("Variable Resistor (IEEE)", null, "varResistorIEEE"),
         singleElement("Variable Resistor (IEC)", null, "varResistorIEC"),
         singleElement("Trimmer Resistor", null, "trimResistor"),
-        singleElement("Thermistor", null, "thermistor"),
-        singleElement("Photoresistor", null, "photoresistor")
+        singleElement("Thermistor", null, "thermistor")
     ]);
     var capacitors = new ListGUI([
         singleElement("Capacitor", null, "capacitor"),

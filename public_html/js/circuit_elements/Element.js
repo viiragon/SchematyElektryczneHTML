@@ -20,7 +20,7 @@ function Element(x, y, name) {
     this.placed = false;
     this.doubleRotatable = false;
     this.name = name;
-    this.image = getImage(name + "Element");
+    this.image = getImage(name);
 
     this.setUpJoints = function () {
         var joint;

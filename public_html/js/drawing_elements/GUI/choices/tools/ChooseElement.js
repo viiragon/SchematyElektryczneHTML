@@ -25,7 +25,7 @@ function ChooseElement(x, y) {
 
     gui.setElement = function (name) {
         this.element = name;
-        this.image = getImage(name + 'Element');
+        this.image = getImage(name);
     };
     
     gui.getElement = function (x, y) {

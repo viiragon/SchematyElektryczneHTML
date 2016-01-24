@@ -4,27 +4,6 @@
  * and open the template in the editor.
  */
 
-/*
- * ctx.fillStyle = "#FF0000";
- * ctx.fillRect(0,0,150,75);
- * 
- * ctx.moveTo(0,0);
- * ctx.lineTo(200,100);
- * ctx.stroke();
- * 
- * ctx.beginPath();
- * ctx.arc(95,50,40,0,2*Math.PI);
- * ctx.stroke();
- * 
- * ctx.font = "30px Comic Sans MS";
- * ctx.fillStyle = "red";
- * ctx.textAlign = "center";
- * ctx.fillText("Hello World", canvas.width/2, canvas.height/2); 
- * 
- * var img = document.getElementById("scream");
- * ctx.drawImage(img, 10, 10);
- */
-
 /* global MODE_DELETE, MODE_JOINTS, MODE_MOVE, MODE_NORMAL, Canvas2Image */
 
 var classList = [
@@ -32,15 +11,17 @@ var classList = [
     ["circuit_elements/", "Joint", "Element"],
     ["circuit_elements/element_creators/", "Diode", "TmpElement"],
     ["drawing_elements/", "LinePlacer", "GuiElement", "Cropper", "Deleter"],
-    ["drawing_elements/GUI/", "ToolsGUI", "ToolsAppearer", "FileGUI", "FileGUIAppearer"],
+    ["drawing_elements/GUI/", "ToolsGUI", "ToolsAppearer", "FileGUI", "FileAppearer", "ListAppearer", "ListGUI"],
     ["drawing_elements/GUI/choices/", "ChoiceTemplate"],
-    ["drawing_elements/GUI/choices/tools/", "ChooseNormal", "ChooseDelete", "ChooseElement", "ChooseWires", "ChooseMoving"
-                , "ListAppearer", "ListGUI"],
+    ["drawing_elements/GUI/choices/tools/", "ChooseNormal", "ChooseDelete", "ChooseElement", "ChooseWires", "ChooseMoving"],
     ["drawing_elements/GUI/choices/file/", "ChooseSaveAsPNG", "ChooseBackground", "ChooseCrop", "ChooseEnableCrop"
                 , "ChooseAutoCrop", "ChooseLoadDiagram", "ChooseSaveAsFile", "ChooseNewDiagram", "ChooseHelp"]
 ];
 
-var imageNamesList = ["wiresIcon", "normalIcon", "deleteIcon", "moveIcon", "diodeElement", "tools", "file"];
+var imageNamesList = ["wiresIcon", "normalIcon", "deleteIcon", "moveIcon", "tools", "file"];
+var elementImageNamesList = ["diode", "spstToggle", "spdtToggle", "buttonSwitchNO", "buttonSwitchNC", "earthGround"
+    , "chassisGround", "resistorIEEE", "resistorIEC", "potentiometrIEEE", "potentiometrIEC", "varResistorIEEE", "varResistorIEC"
+    , "trimResistor", "thermistor", "capacitor", "polCapacitor", "varCapacitor"];
 var imageList = [];
 
 var nameToElementTable;
@@ -60,6 +41,17 @@ function loadImages() {
         var image = new Image();
         image.src = "images/" + imageNamesList[i] + ".png";
         image.name = imageNamesList[i];
+        console.log("\t" + image.name + " is loading");
+        image.onload = function () {
+            imageList.push(this);
+            console.log("\t" + this.name + " loaded");
+        };
+    }
+    console.log("Number of element images to load : " + elementImageNamesList.length);
+    for (var i = 0; i < elementImageNamesList.length; i++) {
+        var image = new Image();
+        image.src = "images/elements/" + elementImageNamesList[i] + ".png";
+        image.name = elementImageNamesList[i];
         console.log("\t" + image.name + " is loading");
         image.onload = function () {
             imageList.push(this);
@@ -141,10 +133,6 @@ function prepareDocument() {
     diagram = new Diagram(bgl.width, bgl.height);
     diagram.drawBackground(bgl, bgc);
 
-    nameToElementTable = [
-        "diode", Diode
-    ];
-
     $("#plane").mousemove(function (evt) {
         setMousePos(evt);
         mouseMovement();
@@ -212,15 +200,6 @@ function prepareDocument() {
     }
 }
 
-function getElementFromName(name, x, y) {
-    for (var i = 0; i < nameToElementTable.length; i += 2) {
-        if (nameToElementTable[i] === name) {
-            return new nameToElementTable[i + 1](x, y);
-        }
-    }
-    return null;
-}
-
 function keyboardPressed(key) {
     if (DEBUG) {
         console.log("down: " + key);
@@ -229,6 +208,9 @@ function keyboardPressed(key) {
         case 16:    //SHIFT
             tmpMode = mode;
             mode = MODE_MOVE;
+            break;
+        case 17:    //CTRL
+            mode = MODE_NORMAL;
             break;
         case 46:    //DELETE
             tmpMode = mode;

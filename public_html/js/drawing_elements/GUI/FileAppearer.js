@@ -6,7 +6,7 @@
 
 /* global scale */
 
-function FileGUIAppearer(wholeHeight) {
+function FileAppearer(wholeHeight) {
     var width = scale * 5;
     var gui = new GuiElement(0, 0, width, wholeHeight, true);
 

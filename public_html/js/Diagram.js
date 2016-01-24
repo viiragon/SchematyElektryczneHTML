@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* global Element, DEBUG, Joint, ENABLE_CROPPING, placingId, Cropper, Deleter */
+/* global Element, DEBUG, Joint, ENABLE_CROPPING, placingId, Cropper, Deleter, Diode */
 
 var JOINT_ELEMENT = 0, NORMAL_ELEMENT = 1, CROP_ELEMENT = 2;
 
@@ -42,7 +42,7 @@ function Diagram(width, height) {
 
     this.joints = [];
     this.elements = [];
-    this.GUI = [new ToolsAppearer(this.windowWidth, this.windowHeight), new FileGUIAppearer(this.windowHeight)];
+    this.GUI = [new ToolsAppearer(this.windowWidth, this.windowHeight), new FileAppearer(this.windowHeight)];
 
     this.placer = new LinePlacer();
     this.cropper = new Cropper();
@@ -306,7 +306,7 @@ function Diagram(width, height) {
                     toDelete.push(tmp);
                 } else {
                     tmp.cutLines(this.edited.getXStart(), this.edited.getYStart()
-                                , this.edited.getXEnd(), this.edited.getYEnd());
+                            , this.edited.getXEnd(), this.edited.getYEnd());
                 }
             }
             for (var i = 0; i < toDelete.length; i++) {
@@ -686,6 +686,18 @@ function Diagram(width, height) {
         }
         return nullElement;
     };
+
+    nameToElementTable = [
+        "diode", Diode
+    ];
 }
 
+function getElementFromName(name, x, y) {
+    for (var i = 0; i < nameToElementTable.length; i += 2) {
+        if (nameToElementTable[i] === name) {
+            return new nameToElementTable[i + 1](x, y);
+        }
+    }
+    return null;
+}
 
