@@ -51,7 +51,7 @@ function ListGUI(list, affected) {
         }
     };
 
-    gui.currectPosition = function () {
+    gui.correctPosition = function () {
         if (this.y + this.height > diagram.windowHeight) {
             this.iy -= Math.ceil((this.y + this.height - diagram.windowHeight) / this.lineHeight) * this.lineHeight;
             this.refreshPlacement();
@@ -62,10 +62,10 @@ function ListGUI(list, affected) {
         this.highlight = true;
         var num = Math.floor((y - this.y) / this.lineHeight);
         this.highlighted = num;
-        this.currectPosition();
+        this.correctPosition();
         if (this.childs[num] !== null) {
             this.childs[num].visible = true;
-            this.childs[num].currectPosition();
+            this.childs[num].correctPosition();
         }
         for (var i = 0; i < elementChoosers.length; i++) {
             if (elementChoosers[i] !== this.affected) {

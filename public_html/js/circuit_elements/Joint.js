@@ -131,19 +131,6 @@ function Joint(x, y) {
         }
     };
 
-    this.edit = function (x, y, root, direction) {
-        if (!root.isConnected(direction)) {
-            this.detach();
-            this.joints[(direction + 2) % 4] = root;
-            this.responsible[(direction + 2) % 4] = true;
-            if (this.isHorizontal(direction)) {
-                this.setPos(x, root.y);
-            } else {
-                this.setPos(root.x, y);
-            }
-        }
-    };
-
     this.setPos = function (x, y) {
         this.x = x;
         this.y = y;

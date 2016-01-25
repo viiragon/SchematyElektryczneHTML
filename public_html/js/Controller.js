@@ -19,12 +19,12 @@ var classList = [
 ];
 
 var imageNamesList = ["wiresIcon", "normalIcon", "deleteIcon", "moveIcon", "tools", "file"];
-var elementImageNamesList = ["diode", "spstToggle", "spdtToggle", "buttonSwitchNO", "buttonSwitchNC", "earthGround"
+var elementNamesList = ["diode", "spstToggle", "spdtToggle", "buttonSwitchNO", "buttonSwitchNC", "earthGround"
     , "chassisGround", "resistorIEEE", "resistorIEC", "potentiometrIEEE", "potentiometrIEC", "varResistorIEEE", "varResistorIEC"
     , "trimResistor", "thermistor", "capacitor", "polCapacitor", "varCapacitor"];
 var imageList = [];
 
-var nameToElementTable;
+var elementConstructorTable;
 
 var classNumber;
 var classLoaded = 0;
@@ -47,11 +47,11 @@ function loadImages() {
             console.log("\t" + this.name + " loaded");
         };
     }
-    console.log("Number of element images to load : " + elementImageNamesList.length);
-    for (var i = 0; i < elementImageNamesList.length; i++) {
+    console.log("Number of element images to load : " + elementNamesList.length);
+    for (var i = 0; i < elementNamesList.length; i++) {
         var image = new Image();
-        image.src = "images/elements/" + elementImageNamesList[i] + ".png";
-        image.name = elementImageNamesList[i];
+        image.src = "images/elements/" + elementNamesList[i] + ".png";
+        image.name = elementNamesList[i];
         console.log("\t" + image.name + " is loading");
         image.onload = function () {
             imageList.push(this);
@@ -84,7 +84,7 @@ function loadPackage() {
                         console.log("\tLoaded class : " + this.url + " Remaining: " + (classNumber - classLoaded));
                         if (classLoaded === classNumber) {
                             loading++;
-                            loadPackage(loading);
+                            loadPackage();
                         }
                     })
                     .fail(function () {
@@ -110,7 +110,7 @@ var mx, my;     //Mouse x and y
 
 var diagram;
 
-var click;
+var click;  //Czy wcisnieta mysz
 
 var placingId = 0;  //Co kładziemy
 
@@ -251,7 +251,7 @@ var diagramMoving = false;
 function mouseMovement() {
     if (click === true) {
         if (!diagramMoving) {
-            diagram.moveEdited(mx, my, dl, dc);
+            diagram.moveEdited(mx, my);
         } else {
             diagram.moveDiagram(tmpMx + mx, tmpMy + my);
             diagram.drawBackground(bgl, bgc);
@@ -292,8 +292,6 @@ function setMousePos(evt) {
     my = evt.clientY - rect.top;
 }
 
-var a = false;
-
 function getImage(name) {
     for (var i = 0; i < imageList.length; i++) {
         if (imageList[i].name === name) {
@@ -315,7 +313,7 @@ function saveImage() {
 
 
 function clearDiagram() {
-    diagram.clear();
+    diagram.clearDiagram();
     diagram.drawBackground(bgl, bgc);
 }
 
@@ -332,11 +330,11 @@ function loadDiagramFromCookie() {
     diagram.drawBackground(bgl, bgc);
 }
 
-function setCookieDiagram(cvalue) {
+function setCookieDiagram(text) {
     var d = new Date();
     d.setTime(d.getTime() + (3650 * 24 * 60 * 60 * 1000));  //10 lat do przodu.... :D
     var expires = "expires=" + d.toUTCString();
-    document.cookie = "diagramSave=" + cvalue + "; " + expires;
+    document.cookie = "diagramSave=" + text + "; " + expires;
 }
 
 function getCookieDiagram() {

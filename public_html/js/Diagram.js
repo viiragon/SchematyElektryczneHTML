@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* global Element, DEBUG, Joint, ENABLE_CROPPING, placingId, Cropper, Deleter, Diode */
+/* global Element, DEBUG, Joint, ENABLE_CROPPING, placingId, Cropper, Deleter, Diode, elementNamesList */
 
 var JOINT_ELEMENT = 0, NORMAL_ELEMENT = 1, CROP_ELEMENT = 2;
 
@@ -173,13 +173,41 @@ function Diagram(width, height) {
         }
     };
 
+    this.deleteElement = function (element) {
+        if (element.id !== -1) {
+            if (element instanceof Joint) {
+                for (var i = 0; i < this.joints.length; i++) {
+                    if (this.joints[i] === element) {
+                        this.joints.splice(i, 1);
+                        var j;
+                        for (j = 0; j < this.joints.length; j++)
+                            this.joints[j].id = j;
+                        this.jointId = j;
+                        break;
+                    }
+                }
+            } else if (element instanceof Element) {
+                for (var i = 0; i < this.elements.length; i++) {
+                    if (this.elements[i] === element) {
+                        this.elements.splice(i, 1);
+                        var j;
+                        for (j = 0; j < this.elements.length; j++)
+                            this.elements[j].id = j;
+                        this.elementId = j;
+                        break;
+                    }
+                }
+            }
+        }
+    };
+
     this.addElementEdited = function (element) {
         this.edited = element;
         this.selected = nullElement;
         this.addElement(element);
     };
 
-    this.moveEdited = function (x, y, dl, dc) {
+    this.moveEdited = function (x, y) {
         if (this.xoffset !== 0 || this.yoffset !== 0) {
             x -= this.xoffset;
             y -= this.yoffset;
@@ -193,63 +221,6 @@ function Diagram(width, height) {
                 this.edited.setPos(x, y);
             }
         }
-    };
-
-    this.moveDiagram = function (x, y) {
-        this.xoffset = Math.min(Math.floor(x / scale) * scale, 0);
-        this.yoffset = Math.min(Math.floor(y / scale) * scale, 0);
-    };
-
-    this.setAutoCrop = function () {
-        if (this.joints.length + this.elements.length > 0) {
-            var sx = Number.MAX_VALUE, sy = Number.MAX_VALUE;
-            var ex = 0, ey = 0;
-            var tmp;
-            for (var i = 0; i < this.joints.length; i++) {
-                tmp = this.joints[i];
-                if (tmp.x - snapDistance < sx) {
-                    sx = tmp.x - snapDistance;
-                }
-                if (tmp.y - snapDistance < sy) {
-                    sy = tmp.y - snapDistance;
-                }
-                if (tmp.x + snapDistance > ex) {
-                    ex = tmp.x + snapDistance;
-                }
-                if (tmp.y + snapDistance > ey) {
-                    ey = tmp.y + snapDistance;
-                }
-            }
-            for (var i = 0; i < this.elements.length; i++) {
-                tmp = this.elements[i];
-                if (tmp.x - tmp.width < sx) {
-                    sx = tmp.x - tmp.width;
-                }
-                if (tmp.y - tmp.width < sy) {
-                    sy = tmp.y - tmp.width;
-                }
-                if (tmp.x + tmp.width > ex) {
-                    ex = tmp.x + tmp.width;
-                }
-                if (tmp.y + tmp.width > ey) {
-                    ey = tmp.y + tmp.width;
-                }
-            }
-            this.cropper.startEdit(sx, sy);
-            this.cropper.setPos(ex, ey);
-        }
-    };
-
-    this.clear = function () {
-        this.edited = nullElement;
-        this.selected = nullElement;
-        this.xoffset = 0;
-        this.yoffset = 0;
-        this.elementId = 0;
-        this.jointId = 0;
-        this.joints = [];
-        this.elements = [];
-        this.cropper.startEdit(-1, -1);
     };
 
     this.discardEdited = function () {
@@ -318,39 +289,61 @@ function Diagram(width, height) {
         this.edited = nullElement;
     };
 
-    this.deleteElement = function (element) {
-        if (element.id !== -1) {
-            if (element instanceof Joint) {
-                for (var i = 0; i < this.joints.length; i++) {
-                    if (this.joints[i] === element) {
-                        this.joints.splice(i, 1);
-                        var j;
-                        for (j = 0; j < this.joints.length; j++)
-                            this.joints[j].id = j;
-                        this.jointId = j;
-                        break;
-                    }
+    this.moveDiagram = function (x, y) {
+        this.xoffset = Math.min(Math.floor(x / scale) * scale, 0);
+        this.yoffset = Math.min(Math.floor(y / scale) * scale, 0);
+    };
+
+    this.setAutoCrop = function () {
+        if (this.joints.length + this.elements.length > 0) {
+            var sx = Number.MAX_VALUE, sy = Number.MAX_VALUE;
+            var ex = 0, ey = 0;
+            var tmp;
+            for (var i = 0; i < this.joints.length; i++) {
+                tmp = this.joints[i];
+                if (tmp.x - snapDistance < sx) {
+                    sx = tmp.x - snapDistance;
                 }
-            } else if (element instanceof Element) {
-                for (var i = 0; i < this.elements.length; i++) {
-                    if (this.elements[i] === element) {
-                        this.elements.splice(i, 1);
-                        var j;
-                        for (j = 0; j < this.elements.length; j++)
-                            this.elements[j].id = j;
-                        this.elementId = j;
-                        break;
-                    }
+                if (tmp.y - snapDistance < sy) {
+                    sy = tmp.y - snapDistance;
+                }
+                if (tmp.x + snapDistance > ex) {
+                    ex = tmp.x + snapDistance;
+                }
+                if (tmp.y + snapDistance > ey) {
+                    ey = tmp.y + snapDistance;
                 }
             }
+            for (var i = 0; i < this.elements.length; i++) {
+                tmp = this.elements[i];
+                if (tmp.x - tmp.width < sx) {
+                    sx = tmp.x - tmp.width;
+                }
+                if (tmp.y - tmp.width < sy) {
+                    sy = tmp.y - tmp.width;
+                }
+                if (tmp.x + tmp.width > ex) {
+                    ex = tmp.x + tmp.width;
+                }
+                if (tmp.y + tmp.width > ey) {
+                    ey = tmp.y + tmp.width;
+                }
+            }
+            this.cropper.startEdit(sx, sy);
+            this.cropper.setPos(ex, ey);
         }
     };
 
-    this.deleteSelected = function () {
-        if (this.selected.id !== -1) {
-            this.deleteElement(this.selected);
-            this.selected = nullElement;
-        }
+    this.clearDiagram = function () {
+        this.edited = nullElement;
+        this.selected = nullElement;
+        this.xoffset = 0;
+        this.yoffset = 0;
+        this.elementId = 0;
+        this.jointId = 0;
+        this.joints = [];
+        this.elements = [];
+        this.cropper.startEdit(-1, -1);
     };
 
     this.saveDiagram = function () {
@@ -687,15 +680,15 @@ function Diagram(width, height) {
         return nullElement;
     };
 
-    nameToElementTable = [
-        "diode", Diode
+    elementConstructorTable = [
+        Diode
     ];
 }
 
 function getElementFromName(name, x, y) {
-    for (var i = 0; i < nameToElementTable.length; i += 2) {
-        if (nameToElementTable[i] === name) {
-            return new nameToElementTable[i + 1](x, y);
+    for (var i = 0; i < elementConstructorTable.length; i++) {
+        if (elementNamesList[i] === name) {
+            return new elementConstructorTable[i](x, y);
         }
     }
     return null;

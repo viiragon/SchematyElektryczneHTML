@@ -151,6 +151,9 @@ function Element(x, y, name) {
         }
         return false;
     };
+
+    this.drawMe = function (c, ctx) {
+    };
     
     this.saveMe = function () {
         var joints = "";
@@ -162,9 +165,6 @@ function Element(x, y, name) {
         }
         return "e:" + this.id + ":" + this.name + ":" + (this.x / scale) + ":" + (this.y / scale)
                 + ":" + this.direction + ":" + joints;
-    };
-
-    this.drawMe = function (c, ctx) {
     };
 }
 
