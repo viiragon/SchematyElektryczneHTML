@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* global Element, DEBUG, Joint, ENABLE_CROPPING, placingId, Cropper, Deleter, Diode, elementNamesList */
+/* global Element, DEBUG, Joint, ENABLE_CROPPING, placingId, Cropper, Deleter, Diode, elementNamesList, LineElement, SpstToggle, EarthGround, ChassisGround, PotentiometrIEEE, PotentiometrIEC, Amplifier, Transformer, PMOS, NMOS, JFETP, JFETN, PNP, NPN */
 
 var JOINT_ELEMENT = 0, NORMAL_ELEMENT = 1, CROP_ELEMENT = 2;
 
@@ -370,6 +370,7 @@ function Diagram(width, height) {
 
         var tmpJointId, tmpElementId;
         var cropX, cropY, cropEx, cropEy;
+        txt = txt.replace(/(?:\r\n|\r|\n| |\t)/g, '');  //Usuwa białe znaki
         var data = txt.split(",");
         var line;
 
@@ -401,7 +402,7 @@ function Diagram(width, height) {
                             throw "Wrong element name at line " + i;
                         }
                         tmp.id = parseInt(line[1]);
-                        tmp.direction = parseInt(line[5]);
+                        tmp.rotateToDir(parseInt(line[5]));
                         tmp.placed = true;
                         innerLine = line[6].split("|");
                         for (var j = 0; j < innerLine.length; j++) {
@@ -435,6 +436,9 @@ function Diagram(width, height) {
                     for (var k = 0; k < jointsInElements.length; k++) {
                         if (jointsInElements[k].id === tmp.joints[j]) {
                             tmp.joints[j] = jointsInElements[k];
+                            if (parseInt(tmp.joints[j].joints[tmp.attachments[j]]) !== tmp.id) {
+                                throw "Element id." + tmp.id + " wants to be attached with joint id." + tmp.joints[j].id + ", but joint refuses!";
+                            }
                             tmp.joints[j].joints[tmp.attachments[j]] = tmp;
                             tmp.joints[j].responsible[tmp.attachments[j]] = false;
                             tmp.joints[j].hasElement = true;
@@ -450,6 +454,9 @@ function Diagram(width, height) {
                         for (var k = 0; k < joints.length; k++) {
                             if (joints[k].id === innerLine) {
                                 tmp.joints[j] = joints[k];
+                                if (joints[k].x !== tmp.x && joints[k].y !== tmp.y) {
+                                    throw "Joints id." + tmp.id + " and id." + joints[k].id + " cannot be connected!\nTheir coordinates do not match!";
+                                }
                                 if (tmp.id > joints[k].id) {
                                     tmp.responsible[j] = true;
                                 }
@@ -464,20 +471,20 @@ function Diagram(width, height) {
                 tmp = elements[i];
                 for (var j = 0; j < tmp.joints.length; j++) {
                     if (!(tmp.joints[j] instanceof Joint)) {
-                        throw "Wrong data of element '" + tmp.name + "' id." + tmp.id;
+                        throw "Unknown element attached to element '" + tmp.name + "' id." + tmp.id + ":\n" + tmp.joints[j];
                     }
                 }
             }
             for (var i = 0; i < jointsInElements.length; i++) {
                 if (!jointsInElements[i].hasElement) {
-                    throw "Wrong data of joint id." + jointsInElements[i].id;
+                    throw "Joint id." + jointsInElements[i].id + " should be attached to an element, but it is not";
                 }
             }
             for (var i = 0; i < joints.length; i++) {
                 tmp = joints[i];
                 for (var j = 0; j < 4; j++) {
-                    if (!tmp.joints[j] instanceof Joint) {
-                        throw "Wrong data of joint id." + tmp.id;
+                    if (tmp.joints[j] !== null && !(tmp.joints[j] instanceof Element) && !(tmp.joints[j] instanceof Joint)) {
+                        throw "Unknown element attached to joint id." + tmp.id + ":\n" + tmp.joints[j];
                     }
                 }
             }
@@ -679,18 +686,30 @@ function Diagram(width, height) {
         }
         return nullElement;
     };
-
+    //Kontruktory elementów ktore nie sa proste (jak dioda)
     elementConstructorTable = [
-        Diode
+        "spstToggle", SpstToggle,
+        "earthGround", EarthGround,
+        "chassisGround", ChassisGround,
+        "potentiometrIEEE", PotentiometrIEEE,
+        "potentiometrIEC", PotentiometrIEC,
+        "npn", NPN,
+        "pnp", PNP,
+        "jfetn", JFETN,
+        "jfetp", JFETP,
+        "nmos", NMOS,
+        "pmos", PMOS,
+        "transformer", Transformer,
+        "amplifier", Amplifier        
     ];
 }
 
 function getElementFromName(name, x, y) {
-    for (var i = 0; i < elementConstructorTable.length; i++) {
-        if (elementNamesList[i] === name) {
-            return new elementConstructorTable[i](x, y);
+    for (var i = 0; i < elementConstructorTable.length; i += 2) {
+        if (elementConstructorTable[i] === name) {
+            return new elementConstructorTable[i + 1](x, y, name);
         }
     }
-    return null;
+    return new LineElement(x, y, name);
 }
 

@@ -65,6 +65,20 @@ function Element(x, y, name) {
             }
         } else if (this.doubleRotatable) {
             this.direction = (this.direction + 2) % 4;
+            var tmp;
+            for (var i = 0; i < this.joints.length; i += 2) {
+                tmp = this.joints[i];
+                this.joints[i] = this.joints[i + 1];
+                this.joints[i + 1] = tmp;
+            }
+        }
+    };
+
+    this.rotateToDir = function (direction) {
+        if (direction >= 0 && direction <= 3) {
+            while (this.direction !== direction) {
+                this.rotate();
+            }
         }
     };
 
@@ -153,8 +167,15 @@ function Element(x, y, name) {
     };
 
     this.drawMe = function (c, ctx) {
+        if (this.image !== null) {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.rotate(-this.direction * TO_RADIANS);
+            ctx.drawImage(this.image, -this.width / 2, -this.width / 2, this.width, this.width);
+            ctx.restore();
+        }
     };
-    
+
     this.saveMe = function () {
         var joints = "";
         for (var i = 0; i < this.joints.length; i++) {
@@ -163,8 +184,12 @@ function Element(x, y, name) {
                 joints += "|";
             }
         }
-        return "e:" + this.id + ":" + this.name + ":" + (this.x / scale) + ":" + (this.y / scale)
+        return "e:" + this.id + ":" + this.name + ":" + Math.floor(this.x / scale) + ":" + Math.floor(this.y / scale)
                 + ":" + this.direction + ":" + joints;
+    };
+    
+    this.showMe = function() {
+        this.highlightMe(this.x, this.y, dl, dc);
     };
 }
 

@@ -145,6 +145,7 @@ function listCreator(affected) {
         singleElement("AC Voltage Source", null, "ACVolSource"),
         singleElement("Generator", null, "generator"),
         singleElement("Battery Cell", null, "cell"),
+        singleElement("Controlled Voltage Source", null, "contrVolSource"),
         singleElement("Controlled Current Source", null, "contrCurrSource")
     ]);
     var meters = new ListGUI([
@@ -171,10 +172,11 @@ function listCreator(affected) {
         singleElement("PMOS Transistor", null, "pmos")
     ]);
     var misc = new ListGUI([
+        singleElement("Motor", null, "motor"),
         singleElement("Transformer", null, "transformer"),
         singleElement("Lamp", null, "lamp"),
         singleElement("Fuse", null, "fuse"),
-        singleElement("Operational Amplifier", null, "aplifier")
+        singleElement("Operational Amplifier", null, "amplifier")
     ]);
     var root = new ListGUI([
         singleElement("Switches", switches, null),

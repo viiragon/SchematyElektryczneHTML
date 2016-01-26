@@ -4,12 +4,12 @@
  * and open the template in the editor.
  */
 
-/* global MODE_DELETE, MODE_JOINTS, MODE_MOVE, MODE_NORMAL, Canvas2Image */
+/* global MODE_DELETE, MODE_JOINTS, MODE_MOVE, MODE_NORMAL, Canvas2Image, elementChoosers */
 
 var classList = [
     ["", "Diagram"],
     ["circuit_elements/", "Joint", "Element"],
-    ["circuit_elements/element_creators/", "Diode", "TmpElement"],
+    ["circuit_elements/element_creators/", "LineElement", "Potentiometr", "SpstToggle", "Ground", "Transformer", "TranNP", "TranjFet", "TranMos", "Amplifier"],
     ["drawing_elements/", "LinePlacer", "GuiElement", "Cropper", "Deleter"],
     ["drawing_elements/GUI/", "ToolsGUI", "ToolsAppearer", "FileGUI", "FileAppearer", "ListAppearer", "ListGUI"],
     ["drawing_elements/GUI/choices/", "ChoiceTemplate"],
@@ -19,9 +19,16 @@ var classList = [
 ];
 
 var imageNamesList = ["wiresIcon", "normalIcon", "deleteIcon", "moveIcon", "tools", "file"];
-var elementNamesList = ["diode", "spstToggle", "spdtToggle", "buttonSwitchNO", "buttonSwitchNC", "earthGround"
-    , "chassisGround", "resistorIEEE", "resistorIEC", "potentiometrIEEE", "potentiometrIEC", "varResistorIEEE", "varResistorIEC"
-    , "trimResistor", "thermistor", "capacitor", "polCapacitor", "varCapacitor"];
+var elementNamesList = ["spstToggle", "spdtToggle", "buttonSwitchNO", "buttonSwitchNC"
+    , "earthGround", "chassisGround"
+    , "resistorIEEE", "resistorIEC", "potentiometrIEEE", "potentiometrIEC", "varResistorIEEE", "varResistorIEC"
+        , "trimResistor", "thermistor", "capacitor", "polCapacitor", "varCapacitor"
+    , "inductor", "coreInductor", "varInductor"
+    , "volSource", "currSource", "ACVolSource", "generator", "cell", "contrVolSource", "contrCurrSource"
+    , "voltmeter", "ammeter", "ohmmeter", "wattmeter"
+    , "diode", "zenDiode", "schDiode", "variDiode", "tunnelDiode", "led", "photodiode"
+    , "npn", "pnp", "jfetn", "jfetp", "nmos", "pmos"
+    , "motor", "transformer", "lamp", "fuse", "amplifier"];
 var imageList = [];
 
 var elementConstructorTable;
@@ -205,6 +212,13 @@ function keyboardPressed(key) {
         console.log("down: " + key);
     }
     switch (key) {
+        case 49:
+        case 50:
+        case 51:
+        case 52:
+        case 53:    //1 - 5
+            elementChoosers[key - 49].myClick();
+            break;
         case 16:    //SHIFT
             tmpMode = mode;
             mode = MODE_MOVE;
@@ -352,4 +366,8 @@ function getCookieDiagram() {
 
 function deleteCookieDiagram() {
     document.cookie = "diagramSave=; expires=Thu, 01 Jan 1970 00:00:00 UTC";
+}
+
+function reloadDiagram() {
+    diagram.loadDiagram(diagram.saveDiagram());
 }

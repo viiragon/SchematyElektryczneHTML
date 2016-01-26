@@ -422,8 +422,12 @@ function Joint(x, y) {
                 attachments += "|";
             }
         }
-        return "j:" + this.id + ":" + (this.x / scale) + ":" + (this.y / scale)
+        return "j:" + this.id + ":" + Math.floor(this.x / scale) + ":" + Math.floor(this.y / scale)
                 + ":" + attachments + ":" + (this.hasElement ? "1" : "0");
+    };
+    
+    this.showMe = function() {
+        this.drawHighlight(this.x, this.y, dl, dc);
     };
 }
 

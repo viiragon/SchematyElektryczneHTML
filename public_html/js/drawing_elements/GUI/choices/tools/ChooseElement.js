@@ -10,7 +10,7 @@ function ChooseElement(x, y) {
     var gui = new ChoiceTemplate(x, y, 10 * scale, BIG_CHOICE);
     gui.element = "";
     gui.image = null;
-    
+
     gui.childs = [new ListAppearer(gui)];
 
     gui.myClick = function (x, y) {
@@ -27,10 +27,13 @@ function ChooseElement(x, y) {
         this.element = name;
         this.image = getImage(name);
     };
-    
+
     gui.getElement = function (x, y) {
-        var ret = getElementFromName(this.element, x, y);
-        return ret;
+        if (this.element !== "") {
+            var ret = getElementFromName(this.element, x, y);
+            return ret;
+        } 
+        return null;
     };
 
     return gui;

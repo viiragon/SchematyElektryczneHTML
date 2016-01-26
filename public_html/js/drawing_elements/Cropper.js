@@ -61,8 +61,8 @@ function Cropper() {
 
     this.saveMe = function () {
         if (this.isUsable()) {
-            return (this.x / scale) + ":" + (this.y / scale) + ":"
-                    + (this.ex / scale) + ":" + (this.ey / scale);
+            return Math.floor(this.x / scale) + ":" + Math.floor(this.y / scale) + ":"
+                    + Math.floor(this.ex / scale) + ":" + Math.floor(this.ey / scale);
         } else {
             return "-";
         }
