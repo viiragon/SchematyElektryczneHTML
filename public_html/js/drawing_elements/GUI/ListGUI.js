@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* global scale, defaultFont, dc, elementChoosers, diagram */
+/* global scale, defaultFont, dc, elementChoosers, diagram, lineWidth, halfScale */
 
 function singleElement(name, child, action) {
     return {
@@ -20,12 +20,14 @@ function ListGUI(list, affected) {
     gui.childs = [];
     gui.nameList = [];
     gui.actions = [];
+    gui.images = [];
     gui.highlight = false;
     gui.highlighted = 0;
-    gui.lineHeight = 4 * scale;
     gui.affected = affected;
+    gui.fontSize = 3 * scale;
+    gui.lineHeight = gui.fontSize * 2;
 
-    dc.font = 2 * scale + "px " + defaultFont;
+    dc.font = gui.fontSize + "px " + defaultFont;
     var intTmp;
     for (var i = 0; i < list.length; i++) {
         gui.childs.push(list[i].child);
@@ -35,6 +37,7 @@ function ListGUI(list, affected) {
         }
         gui.nameList.push(list[i].name);
         gui.actions.push(list[i].action);
+        gui.images.push(getImage(list[i].action));
         intTmp = dc.measureText(list[i].name).width;
         if (gui.width < intTmp) {
             gui.width = intTmp;
@@ -43,6 +46,11 @@ function ListGUI(list, affected) {
     gui.width += 4 * scale;
     gui.height = gui.nameList.length * gui.lineHeight;
     gui.ix = -gui.width + 3 * scale;
+
+    gui.isClose = function (x, y) {
+        return x >= this.x && x <= this.x + this.width + 3 * scale
+                && y >= this.y && y <= this.y + this.height;
+    };
 
     gui.myClick = function (x, y) {
         var num = Math.floor((y - this.y) / this.lineHeight);
@@ -62,6 +70,7 @@ function ListGUI(list, affected) {
         this.highlight = true;
         var num = Math.floor((y - this.y) / this.lineHeight);
         this.highlighted = num;
+        this.affected.setTmpElement(this.images[num]);
         this.correctPosition();
         if (this.childs[num] !== null) {
             this.childs[num].visible = true;
@@ -86,22 +95,22 @@ function ListGUI(list, affected) {
         ctx.rect(this.x, this.y, this.width, this.height);
         ctx.fillStyle = "white";
         ctx.fill();
-        ctx.lineWidth = scale / 2;
+        ctx.lineWidth = halfScale;
         ctx.strokeStyle = 'black';
         ctx.stroke();
 
-        ctx.font = 2 * scale + "px " + defaultFont;
+        ctx.font = this.fontSize + "px " + defaultFont;
         ctx.textAlign = "center";
         for (var i = 0; i < this.nameList.length; i++) {
             if (this.highlight && i === this.highlighted) {
                 ctx.beginPath();
-                ctx.rect(this.x + scale / 4, this.y + i * this.lineHeight + scale / 4, this.width - scale / 2, this.lineHeight - scale / 2);
+                ctx.rect(this.x + lineWidth, this.y + i * this.lineHeight + lineWidth, this.width - halfScale, this.lineHeight - halfScale);
                 ctx.fillStyle = "lightgray";
                 ctx.fill();
             }
             ctx.fillStyle = "black";
             ctx.fillText(this.nameList[i], this.x + this.width / 2,
-                    this.y + i * this.lineHeight + 3 * scale);
+                    this.y + i * this.lineHeight + this.fontSize * 1.3);
         }
     };
 

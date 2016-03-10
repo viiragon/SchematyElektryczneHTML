@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* global Element, DEBUG, Joint, ENABLE_CROPPING, placingId, Cropper, Deleter, Diode, elementNamesList, LineElement, SpstToggle, EarthGround, ChassisGround, PotentiometrIEEE, PotentiometrIEC, Amplifier, Transformer, PMOS, NMOS, JFETP, JFETN, PNP, NPN */
+/* global Element, DEBUG, Joint, ENABLE_CROPPING, placingId, Cropper, Deleter, Diode, elementNamesList, LineElement, SpstToggle, EarthGround, ChassisGround, PotentiometrIEEE, PotentiometrIEC, Amplifier, Transformer, PMOS, NMOS, JFETP, JFETN, PNP, NPN, NonRotableLineElement */
 
 var JOINT_ELEMENT = 0, NORMAL_ELEMENT = 1, CROP_ELEMENT = 2;
 
@@ -21,6 +21,8 @@ var placingElement = null;
 var snapDistance; //Odległość po której obiekt jest wychwytywany (scale * 2)
 
 var scale; //Jednostka skali (wielkości) planszy
+var halfScale; //Jednostka skali (wielkości) planszy
+var lineWidth; //scale / 4
 
 function distance(sx, sy, ex, ey) {
     return Math.max(Math.abs(sx - ex), Math.abs(sy - ey));
@@ -30,7 +32,9 @@ function Diagram(width, height) {
     this.windowWidth = width;
     this.windowHeight = height;
     scale = Math.floor(Math.min(width, height) / 120);
+    halfScale = scale / 2;
     snapDistance = scale * 2;
+    lineWidth = scale / 4;
     this.edited = nullElement;
     this.selected = nullElement;
 
@@ -615,11 +619,11 @@ function Diagram(width, height) {
         dc.beginPath();
         dc.arc(mx, my, snapDistance, 0, 2 * Math.PI);
         dc.strokeStyle = 'blue';
-        dc.lineWidth = scale / 4;
+        dc.lineWidth = lineWidth;
         dc.stroke();
 
         dc.beginPath();
-        dc.arc(mx, my, scale / 2, 0, 2 * Math.PI);
+        dc.arc(mx, my, halfScale, 0, 2 * Math.PI);
         dc.fillStyle = 'black';
         dc.fill();
     };
@@ -629,7 +633,7 @@ function Diagram(width, height) {
             mx = Math.floor(mx / scale) * scale;
             my = Math.floor(my / scale) * scale;
             dc.beginPath();
-            dc.arc(mx, my, scale / 2, 0, 2 * Math.PI);
+            dc.arc(mx, my, halfScale, 0, 2 * Math.PI);
             dc.fillStyle = mode !== MODE_MOVE ? '#7DDEFF' : '#0F2CFF';
             dc.fill();
         }
@@ -687,7 +691,14 @@ function Diagram(width, height) {
         return nullElement;
     };
     //Kontruktory elementów ktore nie sa proste (jak dioda)
+    
     elementConstructorTable = [
+        "voltmeter", NonRotableLineElement,
+        "ammeter", NonRotableLineElement,
+        "ohmmeter", NonRotableLineElement,
+        "wattmeter", NonRotableLineElement,
+        "ACVolSource", NonRotableLineElement,
+        "motor", NonRotableLineElement,
         "spstToggle", SpstToggle,
         "earthGround", EarthGround,
         "chassisGround", ChassisGround,

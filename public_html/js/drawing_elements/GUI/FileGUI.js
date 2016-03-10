@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* global scale */
+/* global scale, halfScale */
 
 function FileGUI(height) {
     var gui = new GuiElement(0, 0, scale * 28, height, false);
@@ -34,7 +34,7 @@ function FileGUI(height) {
         ctx.rect(this.x, this.y, this.width, this.height);
         ctx.fillStyle = 'white';
         ctx.fill();
-        ctx.lineWidth = scale / 2;
+        ctx.lineWidth = halfScale;
         ctx.strokeStyle = 'black';
         ctx.stroke();
     };

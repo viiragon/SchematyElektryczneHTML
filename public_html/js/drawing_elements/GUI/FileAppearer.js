@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* global scale */
+/* global scale, halfScale */
 
 function FileAppearer(wholeHeight) {
     var width = scale * 5;
@@ -31,11 +31,11 @@ function FileAppearer(wholeHeight) {
         ctx.rect(this.x, this.y, this.width, this.height);
         ctx.fillStyle = 'white';
         ctx.fill();
-        ctx.lineWidth = scale / 2;
+        ctx.lineWidth = halfScale;
         ctx.strokeStyle = 'black';
         ctx.stroke();
 
-        ctx.drawImage(this.image, this.x + scale / 2, this.y + scale / 2, this.width - scale, this.width - scale);
+        ctx.drawImage(this.image, this.x + halfScale, this.y + halfScale, this.width - scale, this.width - scale);
 
         ctx.beginPath();
         ctx.fillStyle = 'black';

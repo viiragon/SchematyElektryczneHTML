@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* global diagram, snapDistance, scale, ENABLE_CROPPING */
+/* global diagram, snapDistance, scale, ENABLE_CROPPING, lineWidth */
 
 function Deleter() {
     this.x = -1;
@@ -51,7 +51,7 @@ function Deleter() {
 
     this.isUsable = function () {
         return this.x >= 0 && this.y >= 0 && this.ex >= 0 && this.ey >= 0;
-    }
+    };
 
     this.drawMe = function (c, ctx) {
         if (this.isUsable()) {
@@ -60,7 +60,7 @@ function Deleter() {
             ctx.beginPath();
             ctx.rect(this.getXStart(), this.getYStart(),
                     this.getWidth(), this.getHeight());
-            ctx.lineWidth = scale / 4;
+            ctx.lineWidth = lineWidth;
             ctx.strokeStyle = "red";
             ctx.stroke();
             ctx.restore();

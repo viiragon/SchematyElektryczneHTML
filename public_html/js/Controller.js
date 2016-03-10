@@ -20,15 +20,15 @@ var classList = [
 
 var imageNamesList = ["wiresIcon", "normalIcon", "deleteIcon", "moveIcon", "tools", "file"];
 var elementNamesList = ["spstToggle", "spdtToggle", "buttonSwitchNO", "buttonSwitchNC"
-    , "earthGround", "chassisGround"
-    , "resistorIEEE", "resistorIEC", "potentiometrIEEE", "potentiometrIEC", "varResistorIEEE", "varResistorIEC"
-        , "trimResistor", "thermistor", "capacitor", "polCapacitor", "varCapacitor"
-    , "inductor", "coreInductor", "varInductor"
-    , "volSource", "currSource", "ACVolSource", "generator", "cell", "contrVolSource", "contrCurrSource"
-    , "voltmeter", "ammeter", "ohmmeter", "wattmeter"
-    , "diode", "zenDiode", "schDiode", "variDiode", "tunnelDiode", "led", "photodiode"
-    , "npn", "pnp", "jfetn", "jfetp", "nmos", "pmos"
-    , "motor", "transformer", "lamp", "fuse", "amplifier"];
+            , "earthGround", "chassisGround"
+            , "resistorIEEE", "resistorIEC", "potentiometrIEEE", "potentiometrIEC", "varResistorIEEE", "varResistorIEC"
+            , "trimResistor", "thermistor", "capacitor", "polCapacitor", "varCapacitor"
+            , "inductor", "coreInductor", "varInductor"
+            , "volSource", "currSource", "ACVolSource", "generator", "cell", "contrVolSource", "contrCurrSource"
+            , "voltmeter", "ammeter", "ohmmeter", "wattmeter"
+            , "diode", "zenDiode", "schDiode", "variDiode", "tunnelDiode", "led", "photodiode"
+            , "npn", "pnp", "jfetn", "jfetp", "nmos", "pmos"
+            , "motor", "transformer", "lamp", "fuse", "amplifier"];
 var imageList = [];
 
 var elementConstructorTable;
@@ -307,9 +307,11 @@ function setMousePos(evt) {
 }
 
 function getImage(name) {
-    for (var i = 0; i < imageList.length; i++) {
-        if (imageList[i].name === name) {
-            return imageList[i];
+    if (name !== null) {
+        for (var i = 0; i < imageList.length; i++) {
+            if (imageList[i].name === name) {
+                return imageList[i];
+            }
         }
     }
     return null;

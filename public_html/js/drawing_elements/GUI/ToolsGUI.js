@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* global scale */
+/* global scale, halfScale */
 
 var elementChoosers = [];
 
@@ -38,7 +38,7 @@ function ToolsGUI(x, y, height) {
         ctx.rect(this.x, this.y, this.width, this.height);
         ctx.fillStyle = 'white';
         ctx.fill();
-        ctx.lineWidth = scale / 2;
+        ctx.lineWidth = halfScale;
         ctx.strokeStyle = 'black';
         ctx.stroke();
     };

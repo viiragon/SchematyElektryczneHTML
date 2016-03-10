@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* global diagram, scale, snapDistance, mode, MODE_DELETE */
+/* global diagram, scale, snapDistance, mode, MODE_DELETE, lineWidth */
 
 var TO_RADIANS = Math.PI / 2;
 
@@ -128,7 +128,7 @@ function Element(x, y, name) {
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.width / 2.5, 0, 2 * Math.PI);
                 ctx.strokeStyle = 'blue';
-                ctx.lineWidth = scale / 4;
+                ctx.lineWidth = lineWidth;
                 ctx.stroke();
             } else {
                 var d = this.width / 3;
@@ -187,8 +187,8 @@ function Element(x, y, name) {
         return "e:" + this.id + ":" + this.name + ":" + Math.floor(this.x / scale) + ":" + Math.floor(this.y / scale)
                 + ":" + this.direction + ":" + joints;
     };
-    
-    this.showMe = function() {
+
+    this.showMe = function () {
         this.highlightMe(this.x, this.y, dl, dc);
     };
 }

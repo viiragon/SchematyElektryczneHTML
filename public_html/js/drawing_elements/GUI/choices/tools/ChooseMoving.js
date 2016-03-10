@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* global scale, MODE_NORMAL, snapDistance, placingId, MODE_MOVE */
+/* global scale, MODE_NORMAL, snapDistance, placingId, MODE_MOVE, halfScale */
 
 function ChooseMoving(x, y) {
     var gui = new GuiElement(x, y, 10 * scale, 10 * scale, true);
@@ -29,7 +29,7 @@ function ChooseMoving(x, y) {
         ctx.rect(this.x, this.y, this.width, this.height);
         ctx.fillStyle = this.color;
         ctx.fill();
-        ctx.lineWidth = scale / 2;
+        ctx.lineWidth = halfScale;
         ctx.strokeStyle = 'black';
         ctx.stroke();
 
@@ -38,7 +38,7 @@ function ChooseMoving(x, y) {
         if (mode === MODE_MOVE) {
             ctx.beginPath();
             ctx.rect(this.x + scale, this.y + scale, this.width - 2 * scale, this.height - 2 * scale);
-            ctx.lineWidth = scale / 2;
+            ctx.lineWidth = halfScale;
             ctx.strokeStyle = 'black';
             ctx.stroke();
         }

@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* global diagram, snapDistance, scale, ENABLE_CROPPING */
+/* global diagram, snapDistance, scale, ENABLE_CROPPING, lineWidth */
 
 function Cropper() {
     this.x = -1;
@@ -52,7 +52,7 @@ function Cropper() {
             ctx.beginPath();
             ctx.rect(this.getXStart(), this.getYStart(),
                     this.getWidth(), this.getHeight());
-            ctx.lineWidth = scale / 4;
+            ctx.lineWidth = lineWidth;
             ctx.strokeStyle = ENABLE_CROPPING ? "#7DDEFF" : "#F0F0F0";
             ctx.stroke();
             ctx.restore();

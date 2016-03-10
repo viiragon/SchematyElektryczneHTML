@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* global diagram, DEBUG, snapDistance, mode, MODE_DELETE, scale */
+/* global diagram, DEBUG, snapDistance, mode, MODE_DELETE, scale, lineWidth */
 
 var CON_UP = 1, CON_DOWN = 3, CON_LEFT = 0, CON_RIGHT = 2;
 
@@ -238,7 +238,7 @@ function Joint(x, y) {
                     ctx.beginPath();
                     ctx.moveTo(this.x, this.y);
                     ctx.lineTo(this.joints[i].x, this.joints[i].y);
-                    ctx.lineWidth = scale / 4;
+                    ctx.lineWidth = lineWidth;
                     ctx.strokeStyle = 'black';
                     ctx.stroke();
                 }
@@ -246,7 +246,7 @@ function Joint(x, y) {
         }
         if (count === 0 || count > 2 || mode === MODE_DELETE) {
             ctx.beginPath();
-            ctx.arc(this.x, this.y, scale / 2, 0, 2 * Math.PI);
+            ctx.arc(this.x, this.y, halfScale, 0, 2 * Math.PI);
             ctx.fillStyle = 'black';
             ctx.fill();
         }
@@ -391,7 +391,7 @@ function Joint(x, y) {
             ctx.arc(x, y, 2 * scale / 3, 0, 2 * Math.PI);
             ctx.fillStyle = 'white';
             ctx.fill();
-            ctx.lineWidth = scale / 4;
+            ctx.lineWidth = lineWidth;
             ctx.strokeStyle = 'blue';
             ctx.stroke();
         } else {

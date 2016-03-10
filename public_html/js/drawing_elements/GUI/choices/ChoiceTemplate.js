@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* global scale, defaultFont */
+/* global scale, defaultFont, halfScale */
 
 var BIG_CHOICE = 0, CHECKBOX_CHOICE = 1, TEXT_CHOICE = 2;
 
@@ -35,7 +35,7 @@ function ChoiceTemplate(x, y, width, type) {
             ctx.rect(this.x, this.y, this.width, this.height);
             ctx.fillStyle = this.color;
             ctx.fill();
-            ctx.lineWidth = scale / 2;
+            ctx.lineWidth = halfScale;
             ctx.strokeStyle = 'black';
             ctx.stroke();
 
@@ -51,7 +51,7 @@ function ChoiceTemplate(x, y, width, type) {
             ctx.rect(this.x, this.y, this.width, this.height);
             ctx.fillStyle = this.color;
             ctx.fill();
-            ctx.lineWidth = scale / 2;
+            ctx.lineWidth = halfScale;
             ctx.strokeStyle = 'black';
             ctx.stroke();
 
@@ -62,7 +62,7 @@ function ChoiceTemplate(x, y, width, type) {
             if (this.getCondition()) {
                 ctx.beginPath();
                 ctx.rect(this.x + scale, this.y + scale, this.width - 2 * scale, this.height - 2 * scale);
-                ctx.lineWidth = scale / 2;
+                ctx.lineWidth = halfScale;
                 ctx.strokeStyle = 'black';
                 ctx.stroke();
             }
@@ -73,14 +73,14 @@ function ChoiceTemplate(x, y, width, type) {
             ctx.rect(this.x, this.y, 3 * scale, 3 * scale);
             ctx.fillStyle = this.color;
             ctx.fill();
-            ctx.lineWidth = scale / 2;
+            ctx.lineWidth = halfScale;
             ctx.strokeStyle = 'black';
             ctx.stroke();
 
             if (this.getCondition()) {
                 var d = 3 * scale;
                 ctx.beginPath();
-                ctx.lineWidth = scale / 2;
+                ctx.lineWidth = halfScale;
                 ctx.moveTo(this.x, this.y);
                 ctx.lineTo(this.x + d, this.y + d);
                 ctx.strokeStyle = 'black';

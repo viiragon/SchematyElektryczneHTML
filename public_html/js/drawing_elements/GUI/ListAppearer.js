@@ -7,7 +7,7 @@
 /* global scale */
 
 function ListAppearer(parent) {
-    var gui = new GuiElement(-4 * scale, 3 * scale, 3 * scale, 4 * scale, true);
+    var gui = new GuiElement(-6 * scale, 2 * scale, 5 * scale, 6 * scale, true);
 
     gui.childs = [listCreator(parent)];
     gui.color = 'white';

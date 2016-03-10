@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* global diagram, snapDistance, scale */
+/* global diagram, snapDistance, scale, lineWidth */
 
 var DIR_HORIZONTAL = 0, DIR_VERTICAL = 1;
 
@@ -134,20 +134,18 @@ function LinePlacer() {
                 } else {
                     ctx.lineTo(this.edited.x, this.y);
                 }
-                ctx.lineWidth = scale / 4;
+                ctx.lineWidth = lineWidth;
                 ctx.strokeStyle = 'lightgrey';
                 ctx.stroke();
             } else {
                 ctx.moveTo(this.edited.x, this.edited.y);
                 ctx.lineTo(this.sx, this.sy);
-                ctx.lineWidth = scale / 4;
+                ctx.lineWidth = lineWidth;
                 ctx.strokeStyle = 'lightgrey';
                 ctx.stroke();
 
                 ctx.moveTo(this.sx, this.sy);
                 ctx.lineTo(this.x, this.y);
-                ctx.lineWidth = scale / 4;
-                ctx.strokeStyle = 'lightgrey';
                 ctx.stroke();
             }
             ctx.restore();
