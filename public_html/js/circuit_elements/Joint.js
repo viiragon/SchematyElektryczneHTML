@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* global diagram, DEBUG, snapDistance, mode, MODE_DELETE, scale, lineWidth */
+/* global diagram, DEBUG, snapDistance, mode, MODE_DELETE, scale, lineWidth, halfScale, dl, dc */
 
 var CON_UP = 1, CON_DOWN = 3, CON_LEFT = 0, CON_RIGHT = 2;
 
@@ -191,16 +191,18 @@ function Joint(x, y) {
 
     this.isOnLine = function (x, y, d) {
         var end = this.joints[d];
-        if (this.isHorizontal(d)) {
-            if (this.y === y
-                    && ((this.x < end.x && x > this.x && x < end.x)
-                            || (this.x > end.x && x > end.x && x < this.x)))
-                return true;
-        } else {
-            if (this.x === x
-                    && ((this.y < end.y && y > this.y && y < end.y)
-                            || (this.y > end.y && y > end.y && x < this.y)))
-                return true;
+        if (end !== null) {
+            if (this.isHorizontal(d)) {
+                if (this.y === y
+                        && ((this.x < end.x && x > this.x && x < end.x)
+                                || (this.x > end.x && x > end.x && x < this.x)))
+                    return true;
+            } else {
+                if (this.x === x
+                        && ((this.y < end.y && y > this.y && y < end.y)
+                                || (this.y > end.y && y > end.y && y < this.y)))
+                    return true;
+            }
         }
         return false;
     };
@@ -211,8 +213,8 @@ function Joint(x, y) {
         }
         if (!onlyJoints) {
             for (var i = 0; i < this.joints.length; i++) {
-                if (this.joints[i] !== null && this.responsible[i]) {
-                    if (this.isOnLine(x, y, i)) {
+                if (this.joints[i] !== null && this.responsible[i] && this.isOnLine(x, y, i)) {
+                    if (true) {
                         var joint;
                         if (this.isHorizontal(i))
                             joint = new Joint(x, this.y);
@@ -425,8 +427,8 @@ function Joint(x, y) {
         return "j:" + this.id + ":" + Math.floor(this.x / scale) + ":" + Math.floor(this.y / scale)
                 + ":" + attachments + ":" + (this.hasElement ? "1" : "0");
     };
-    
-    this.showMe = function() {
+
+    this.showMe = function () {
         this.drawHighlight(this.x, this.y, dl, dc);
     };
 }

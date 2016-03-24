@@ -241,6 +241,8 @@ function keyboardPressed(key) {
             if (confirm("Do you want to load a diagram from cookies?\nAny unsaved progress will be lost!")) {
                 loadDiagramFromCookie();
             }
+        case 68:    //D
+            DEBUG = !DEBUG;
             break;
     }
 }

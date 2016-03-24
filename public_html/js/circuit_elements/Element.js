@@ -4,9 +4,10 @@
  * and open the template in the editor.
  */
 
-/* global diagram, scale, snapDistance, mode, MODE_DELETE, lineWidth */
+/* global diagram, scale, snapDistance, mode, MODE_DELETE, lineWidth, dl, dc */
 
 var TO_RADIANS = Math.PI / 2;
+var MOVE_CANNOT = 0, MOVE_HOR = 1, MOVE_VERT = 2, MOVE_FREE = 3;
 
 function Element(x, y, name) {
     this.width = 6 * scale;
@@ -21,6 +22,21 @@ function Element(x, y, name) {
     this.doubleRotatable = false;
     this.name = name;
     this.image = getImage(name);
+
+    this.canMove = function () {//TUTAJ
+        var free = true, hor = true, vert = true;
+        var joint;
+        for (var i = 0; i < this.joints.length; i++) {
+            for (var j = 0; j < this.joints[i].joints.length; i++) {
+                joint = this.joints[i].joints[j];
+                if (joint !== null && !(joint instanceof Element)) {
+                    if (joint.isHorizontal(j)) {
+                        
+                    }
+                }
+            }
+        }
+    };
 
     this.setUpJoints = function () {
         var joint;
@@ -82,24 +98,32 @@ function Element(x, y, name) {
         }
     };
 
-    this.place = function (i, endJoint, additional) {
+    this.changePlaceTo = function (i, endJoint) {
         var joint = this.joints[i];
-        if (!additional) {
-            this.setPos(this.x + endJoint.x - joint.x,
-                    this.y + endJoint.y - joint.y);
-        }
+        this.setPos(this.x + endJoint.x - joint.x,
+                this.y + endJoint.y - joint.y);
+    };
+
+    this.place = function (i, endJoint) {
+        var joint = this.joints[i];
         joint.detachOther(this);
         diagram.deleteElement(joint);
         this.joints[i] = endJoint;
-        endJoint.joints[this.attachments[i]] = this;
-        endJoint.responsible[this.attachments[i]] = false;
+        var dir = this.attachments[i];
+        joint = endJoint.joints[dir];
+        if (joint !== null) {
+            joint.joints[(dir + 2) % 4] = null;
+            joint.responsible[(dir + 2) % 4] = false;
+        }
+        endJoint.joints[dir] = this;
+        endJoint.responsible[dir] = false;
         endJoint.hasElement = true;
         endJoint.simplify();
     };
 
-    this.isPlaceable = function () {
-        return true;
-    };
+    /*this.isPlaceable = function () {
+     return true;
+     };*/
 
     this.areJointsClose = function (x, y) {
         for (var i = 0; i < this.joints.length; i++) {
@@ -188,7 +212,7 @@ function Element(x, y, name) {
                 + ":" + this.direction + ":" + joints;
     };
 
-    this.showMe = function () {
+    this.showMe = function () { //DO TESTOW
         this.highlightMe(this.x, this.y, dl, dc);
     };
 }

@@ -240,27 +240,35 @@ function Diagram(width, height) {
             } else {
                 this.edited.simplify();
             }
-        } else if (this.edited instanceof Element && this.edited.isPlaceable()) {
-            var joint;
+        } else if (this.edited instanceof Element/* && this.edited.isPlaceable()*/) {
+            var joint, dir;
             for (var i = 0; i < this.edited.joints.length; i++) {
                 joint = this.edited.joints[i];
                 joint = this.findClosestJoint(joint.x, joint.y, false, joint);
                 if (joint.id !== -1) {
-                    this.edited.place(i, joint, false);
+                    dir = i;
+                    this.edited.changePlaceTo(i, joint);
+                    //this.edited.place(i, joint, false);//
                     break;
                 }
             }
+            var additional = [];
             var previous = joint;
+            console.log(previous.id);
             if (previous.id !== -1) {
                 for (var i = 0; i < this.edited.joints.length; i++) {
                     joint = this.edited.joints[i];
-                    if (joint.id !== previous.id) {
+                    if (joint !== null && (joint.x !== previous.x || joint.y !== previous.y)) {
                         joint = this.findExactJoint(joint.x, joint.y, false, joint);
                         if (joint.id !== -1) {
-                            this.edited.place(i, joint, true);
-                            break;
+                            additional.push(i);
+                            additional.push(joint);
                         }
                     }
+                }
+                this.edited.place(dir, previous);
+                for (var i = 0; i < additional.length; i += 2) {
+                    this.edited.place(additional[i], additional[i + 1]);
                 }
             }
             this.edited.placed = true;
@@ -684,14 +692,15 @@ function Diagram(width, height) {
         for (var i = 0; i < this.joints.length; i++) {
             if (this.joints[i].id !== exception.id) {
                 var joint = this.joints[i].getExactJoint(mx, my, onlyJoints);
-                if (joint !== null)
+                if (joint !== null) {
                     return joint;
+                }
             }
         }
         return nullElement;
     };
     //Kontruktory elementów ktore nie sa proste (jak dioda)
-    
+
     elementConstructorTable = [
         "voltmeter", NonRotableLineElement,
         "ammeter", NonRotableLineElement,
@@ -711,7 +720,7 @@ function Diagram(width, height) {
         "nmos", NMOS,
         "pmos", PMOS,
         "transformer", Transformer,
-        "amplifier", Amplifier        
+        "amplifier", Amplifier
     ];
 }
 
