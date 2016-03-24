@@ -102,13 +102,23 @@ function ListGUI(list, affected) {
         ctx.font = this.fontSize + "px " + defaultFont;
         ctx.textAlign = "center";
         for (var i = 0; i < this.nameList.length; i++) {
-            if (this.highlight && i === this.highlighted) {
+            if (this.affected.element === this.actions[i]) {
                 ctx.beginPath();
-                ctx.rect(this.x + lineWidth, this.y + i * this.lineHeight + lineWidth, this.width - halfScale, this.lineHeight - halfScale);
+                ctx.rect(this.x + lineWidth * 2, this.y + i * this.lineHeight + lineWidth * 2,
+                        this.width - halfScale * 2, this.lineHeight - halfScale * 2);
+                ctx.fillStyle = "gray";
+                ctx.fill();
+                ctx.fillStyle = "white";
+            } else if (this.highlight && i === this.highlighted) {
+                ctx.beginPath();
+                ctx.rect(this.x + lineWidth, this.y + i * this.lineHeight + lineWidth,
+                        this.width - halfScale, this.lineHeight - halfScale);
                 ctx.fillStyle = "lightgray";
                 ctx.fill();
+                ctx.fillStyle = "black";
+            } else {
+                ctx.fillStyle = "black";
             }
-            ctx.fillStyle = "black";
             ctx.fillText(this.nameList[i], this.x + this.width / 2,
                     this.y + i * this.lineHeight + this.fontSize * 1.3);
         }
