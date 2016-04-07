@@ -21,7 +21,7 @@ function GuiElement(x, y, width, height, visible) {
 
     this.setUpChildren = function () {
         if (this.childs.length > 0) {
-            var int = 0;
+            var num = 0;
             for (var i = 0; i < this.childs.length; i++) {
                 var child = this.childs[i];
                 if (child !== null) {
@@ -29,10 +29,10 @@ function GuiElement(x, y, width, height, visible) {
                     child.x = child.ix + this.x;
                     child.y = child.iy + this.y;
                     child.setUpChildren();
-                    int++;
+                    num++;
                 }
             }
-            if (int !== 0) {
+            if (num !== 0) {
                 this.hasChildren = true;
                 return;
             }
