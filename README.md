@@ -9,5 +9,5 @@ w pożądane miejsce (ewentualnie zmienić nazwę pliku "index.html")
 Dostępna jest wydajniejsza zaciemniona (obsfuscated) wersja aplikacji.
 
 By ją uzyskać należy użyć zawartości folderu "obsfuscate", uzupełnionej o pliki 
-"style.css", folder "images" oraz "help.html"
+"style.css", folder "images" oraz "help.html" z folderu "public_html"
 
