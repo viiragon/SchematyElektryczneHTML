@@ -13,14 +13,14 @@ var mode = 0;
 var MODE_NORMAL = 0, MODE_JOINTS = 1, MODE_DELETE = 2, MODE_MOVE = 3;
 
 var nullElement = {
-    id: -1
+    id: null
 };
 
 var placingElement = null;
 
 var snapDistance; //Odległość po której obiekt jest wychwytywany (scale * 2)
 
-var scale; //Jednostka skali (wielkości) planszy
+var scale, orgScale; //Jednostka skali (wielkości) planszy
 var halfScale; //Jednostka skali (wielkości) planszy
 var lineWidth; //scale / 4
 
@@ -52,6 +52,13 @@ function Diagram(width, height) {
     this.cropper = new Cropper();
     this.deleter = new Deleter();
 
+    this.changeScale = function (change) {
+        scale = orgScale * change;
+        halfScale = scale / 2;
+        snapDistance = scale * 2;
+        lineWidth = scale / 4;
+    };
+
     this.addElementInPlace = function (code, x, y) {
         var element = null;
         if (this.xoffset !== 0 || this.yoffset !== 0) {
@@ -61,7 +68,7 @@ function Diagram(width, height) {
         switch (code) {
             case JOINT_ELEMENT:
                 var joint = this.findClosestJoint(x, y, false, this.edited);
-                if (joint.id !== -1) {
+                if (joint.id !== null) {
                     this.edited = joint;
                     this.placer.setEdited(joint);
                 }
@@ -90,7 +97,7 @@ function Diagram(width, height) {
             y -= this.yoffset;
         }
         var joint = this.findClosestJoint(x, y, false, this.edited);
-        if (joint.id === -1) {
+        if (joint.id === null) {
             joint = new Joint(Math.floor(x / scale) * scale
                     , Math.floor(y / scale) * scale);
             this.addElement(joint);
@@ -139,7 +146,7 @@ function Diagram(width, height) {
             x -= this.xoffset;
             y -= this.yoffset;
         }
-        if (this.edited.id !== -1 && this.edited instanceof Element) {
+        if (this.edited.id !== null && this.edited instanceof Element) {
             this.edited.rotate();
         } else {
             x = Math.floor(x / scale) * scale;
@@ -178,7 +185,7 @@ function Diagram(width, height) {
     };
 
     this.deleteElement = function (element) {
-        if (element.id !== -1) {
+        if (element.id !== null) {
             if (element instanceof Joint) {
                 for (var i = 0; i < this.joints.length; i++) {
                     if (this.joints[i] === element) {
@@ -218,7 +225,7 @@ function Diagram(width, height) {
         }
         x = Math.floor(x / scale) * scale;
         y = Math.floor(y / scale) * scale;
-        if (this.edited.id !== -1) {
+        if (this.edited.id !== null) {
             if (this.edited instanceof Joint) {
                 this.placer.edit(x, y);
             } else {
@@ -231,7 +238,7 @@ function Diagram(width, height) {
         if (this.edited instanceof Joint) {
             if (this.placer.isPlaceable()) {
                 var joint = this.findClosestJoint(this.placer.x, this.placer.y, false, this.edited);
-                if (joint.id !== -1) {
+                if (joint.id !== null) {
                     this.placer.connect(joint);
                 } else {
                     this.placer.place();
@@ -245,7 +252,7 @@ function Diagram(width, height) {
             for (var i = 0; i < this.edited.joints.length; i++) {
                 joint = this.edited.joints[i];
                 joint = this.findClosestJoint(joint.x, joint.y, false, joint);
-                if (joint.id !== -1) {
+                if (joint.id !== null) {
                     dir = i;
                     this.edited.changePlaceTo(i, joint);
                     //this.edited.place(i, joint, false);//
@@ -255,12 +262,12 @@ function Diagram(width, height) {
             var additional = [];
             var previous = joint;
             console.log(previous.id);
-            if (previous.id !== -1) {
+            if (previous.id !== null) {
                 for (var i = 0; i < this.edited.joints.length; i++) {
                     joint = this.edited.joints[i];
                     if (joint !== null && (joint.x !== previous.x || joint.y !== previous.y)) {
                         joint = this.findExactJoint(joint.x, joint.y, false, joint);
-                        if (joint.id !== -1) {
+                        if (joint.id !== null) {
                             additional.push(i);
                             additional.push(joint);
                         }
@@ -302,8 +309,8 @@ function Diagram(width, height) {
     };
 
     this.moveDiagram = function (x, y) {
-        this.xoffset = Math.min(Math.floor(x / scale) * scale, 0);
-        this.yoffset = Math.min(Math.floor(y / scale) * scale, 0);
+        this.xoffset = Math.floor(x / scale) * scale;
+        this.yoffset = Math.floor(y / scale) * scale;
     };
 
     this.setAutoCrop = function () {
@@ -355,7 +362,7 @@ function Diagram(width, height) {
         this.jointId = 0;
         this.joints = [];
         this.elements = [];
-        this.cropper.startEdit(-1, -1);
+        this.cropper.startEdit(null, null);
     };
 
     this.saveDiagram = function () {
@@ -401,7 +408,7 @@ function Diagram(width, height) {
                 cropEx = parseInt(line[2]) * scale;
                 cropEy = parseInt(line[3]) * scale;
             } else {
-                cropX = cropY = cropEx = cropEy = -1;
+                cropX = cropY = cropEx = cropEy = null;
             }
             var tmp, innerLine;
             for (var i = 3; i < data.length; i++) {
@@ -580,7 +587,7 @@ function Diagram(width, height) {
             mx -= this.xoffset;
             my -= this.yoffset;
         }
-        if (this.edited.id !== -1) {
+        if (this.edited.id !== null) {
             if (this.edited instanceof Joint) {
                 this.placer.drawMe(dl, dc);
                 this.highlightJoints(dl, dc, this.placer.x, this.placer.y, this.edited);
@@ -613,7 +620,7 @@ function Diagram(width, height) {
             my += this.yoffset;
         }
         for (var i = 0; i < this.GUI.length; i++) {
-            if (this.edited.id === -1) {
+            if (this.edited.id === null) {
                 this.GUI[i].onMouseOver(mx, my);
             }
             this.GUI[i].drawMe(dl, dc);

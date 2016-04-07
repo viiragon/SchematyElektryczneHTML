@@ -7,17 +7,17 @@
 /* global diagram, snapDistance, scale, ENABLE_CROPPING, lineWidth */
 
 function Cropper() {
-    this.x = -1;
-    this.y = -1;
-    this.ex = -1;
-    this.ey = -1;
+    this.x = null;
+    this.y = null;
+    this.ex = null;
+    this.ey = null;
     this.id = 0;
 
     this.startEdit = function (x, y) {
         this.x = x;
         this.y = y;
-        this.ex = -1;
-        this.ey = -1;
+        this.ex = null;
+        this.ey = null;
     };
 
     this.setPos = function (x, y) {
@@ -42,7 +42,7 @@ function Cropper() {
     };
 
     this.isUsable = function () {
-        return this.x >= 0 && this.y >= 0 && this.ex >= 0 && this.ey >= 0;
+        return this.x !== null && this.y !== null && this.ex !== null && this.ey !== null;
     };
 
     this.drawMe = function (c, ctx) {

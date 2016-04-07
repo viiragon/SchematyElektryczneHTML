@@ -9,10 +9,10 @@
 var DIR_HORIZONTAL = 0, DIR_VERTICAL = 1;
 
 function LinePlacer() {
-    this.x = -1;
-    this.y = -1;
-    this.sx = -1;
-    this.sy = -1;
+    this.x = null;
+    this.y = null;
+    this.sx = null;
+    this.sy = null;
     this.edited = null;
     this.direction = 0;
     this.frees;
@@ -64,7 +64,7 @@ function LinePlacer() {
     };
 
     this.isPlaceable = function () {
-        return this.x >= 0 && this.y >= 0;
+        return this.x !== null && this.y !== null;
     };
 
     this.place = function () {
@@ -74,10 +74,10 @@ function LinePlacer() {
     };
 
     this.clear = function () {
-        this.x = -1;
-        this.y = -1;
-        this.sx = -1;
-        this.sy = -1;
+        this.x = null;
+        this.y = null;
+        this.sx = null;
+        this.sy = null;
         this.edited = null;
     };
 
@@ -87,8 +87,8 @@ function LinePlacer() {
                 this.x = this.edited.x;
                 this.y = y;
                 this.direction = DIR_VERTICAL;
-                this.sx = 0;
-                this.sy = 0;
+                this.sx = null;
+                this.sy = null;
                 return;
             }
         } else if (Math.abs(y - this.edited.y) < snapDistance) {
@@ -96,8 +96,8 @@ function LinePlacer() {
                 this.x = x;
                 this.y = this.edited.y;
                 this.direction = DIR_HORIZONTAL;
-                this.sx = 0;
-                this.sy = 0;
+                this.sx = null;
+                this.sy = null;
                 return;
             }
         } else {
@@ -117,17 +117,17 @@ function LinePlacer() {
                 }
             }
         }
-        this.x = -1;
-        this.y = -1;
-        this.sx = 0;
-        this.sy = 0;
+        this.x = null;
+        this.y = null;
+        this.sx = null;
+        this.sy = null;
     };
 
     this.drawMe = function (c, ctx) {
         if (this.isPlaceable()) {
             ctx.save();
             ctx.setLineDash([scale, scale]);
-            if (this.sx === 0 && this.sy === 0) {
+            if (this.sx === null && this.sy === null) {
                 ctx.moveTo(this.edited.x, this.edited.y);
                 if (this.direction === DIR_HORIZONTAL) {
                     ctx.lineTo(this.x, this.edited.y);
