@@ -23,7 +23,7 @@ function LinePlacer() {
     };
 
     this.connect = function (endJoint) {
-        if (this.sx === 0 && this.sy === 0) {
+        if (this.sx === null && this.sy === null) {
             if (endJoint.x === this.edited.x || endJoint.y === this.edited.y) {
                 this.edited.connect(endJoint);
             } else {
