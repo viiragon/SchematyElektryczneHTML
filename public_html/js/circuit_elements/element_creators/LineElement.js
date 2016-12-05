@@ -19,6 +19,58 @@ function LineElement(x, y, name) {
     return element;
 }
 
+function Resistor(x, y, name) {
+    var element = LineElement(x, y, name);
+
+    var net = element.getNetElement();
+    net.netName = "R";
+    net.netParametersIDs = ["R", "Temp"];
+    net.netParametersValues = ["1 kOhm", "26.85"];
+    net.netParametersNames = ["Resistance", "Temperature"];
+    net.setUpList();
+    
+    return element;
+}
+
+function Capacitor(x, y, name) {
+    var element = LineElement(x, y, name);
+
+    var net = element.getNetElement();
+    net.netName = "C";
+    net.netParametersIDs = ["C", "V"];
+    net.netParametersValues = ["1 nF", "0 V"];
+    net.netParametersNames = ["Capacity", "Init. Voltage"];
+    net.setUpList();
+    
+    return element;
+}
+
+function Inductor(x, y, name) {
+    var element = LineElement(x, y, name);
+
+    var net = element.getNetElement();
+    net.netName = "L";
+    net.netParametersIDs = ["L", "I"];
+    net.netParametersValues = ["1 nH", "0 A"];
+    net.netParametersNames = ["Inductance", "Init. Current"];
+    net.setUpList();
+    
+    return element;
+}
+
+function DCVoltageSource(x, y, name) {
+    var element = LineElement(x, y, name);
+
+    var net = element.getNetElement();
+    net.netName = "Vdc";
+    net.netParametersIDs = ["U"];
+    net.netParametersValues = ["1 V"];
+    net.netParametersNames = ["Voltage"];
+    net.setUpList();
+    
+    return element;
+}
+
 function NonRotableLineElement(x, y, name) {
     var element = LineElement(x, y, name);
     element.drawMe = function (c, ctx) {

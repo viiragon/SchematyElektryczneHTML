@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* global diagram, DEBUG, snapDistance, mode, MODE_DELETE, scale, lineWidth, halfScale, dl, dc */
+/* global diagram, DEBUG, snapDistance, mode, MODE_DELETE, scale, lineWidth, halfScale, dl, dc, Element */
 
 var CON_UP = 1, CON_DOWN = 3, CON_LEFT = 0, CON_RIGHT = 2;
 
@@ -15,6 +15,31 @@ function Joint(x, y) {
     this.y = y;
     this.id = -2;
     this.hasElement = false;
+
+    this.wasSpreading = false;
+
+    this.clearSpreadData = function () {
+        this.wasSpreading = false;
+    };
+
+    this.spreadNodeId = function (nodeId) {
+        if (!this.wasSpreading) {
+            this.wasSpreading = true;
+            for (var i = 0; i < this.joints.length; i++) {
+                if (this.joints[i] !== null) {
+                    if (this.joints[i] instanceof Joint) {
+                        this.joints[i].spreadNodeId(nodeId);
+                    } else {
+                        var element = this.joints[i];
+                        var index = element.getJointIndex(this.id);
+                        if (index >= 0) {
+                            element.getNetElement().netNodes[index] = nodeId;
+                        }
+                    }
+                }
+            }
+        }
+    };
 
     this.connect = function (joint) {
         if (joint.x === this.x) {

@@ -197,6 +197,10 @@ function listCreator(affected) {
         singleElement("Fuse", null, "fuse"),
         singleElement("Operational Amplifier", null, "amplifier")
     ]);
+    var simulations = new ListGUI([
+        singleElement("AC Simulation", null, "acSimulation"),
+        singleElement("DC Simulation", null, "dcSimulation")
+    ]);
     var root = new ListGUI([
         singleElement("Switches", switches, null),
         singleElement("Grounds", grounds, null),
@@ -207,7 +211,8 @@ function listCreator(affected) {
         singleElement("Meters", meters, null),
         singleElement("Diodes", diodes, null),
         singleElement("Transistors", transistors, null),
-        singleElement("Miscellaneous", misc, null)
+        singleElement("Miscellaneous", misc, null),
+        singleElement("Simulations", simulations, null)
     ], affected);
     return root;
 }

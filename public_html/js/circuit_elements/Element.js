@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* global diagram, scale, snapDistance, mode, MODE_DELETE, lineWidth, dl, dc */
+/* global diagram, scale, snapDistance, mode, MODE_DELETE, lineWidth, dl, dc, NULL_NODE */
 
 var TO_RADIANS = Math.PI / 2;
 var MOVE_CANNOT = 0, MOVE_HOR = 1, MOVE_VERT = 2, MOVE_FREE = 3;
@@ -23,6 +23,30 @@ function Element(x, y, name) {
     this.name = name;
     this.image = getImage(name);
 
+    this.netElement = new NetElement("R", this);
+
+    this.getNetElement = function () {
+        return this.netElement;
+    };
+
+    this.setUpNetNodes = function () {
+        //console.log("Element " + this.id + " " + this.name);
+        for (var i = 0; i < this.joints.length; i++) {
+            if (this.netElement.netNodes[i] === NULL_NODE) {
+                var nodeId = getNetNodeId();
+                this.joints[i].spreadNodeId(nodeId);
+            }
+        }
+    };
+
+    this.showList = function () {
+        this.netElement.showList(this.x + diagram.xoffset, this.y + diagram.yoffset);
+    };
+
+    this.hideList = function () {
+        this.netElement.hideList();
+    };
+
     this.canMove = function () {//TUTAJ
         var free = true, hor = true, vert = true;
         var joint;
@@ -31,11 +55,20 @@ function Element(x, y, name) {
                 joint = this.joints[i].joints[j];
                 if (joint !== null && !(joint instanceof Element)) {
                     if (joint.isHorizontal(j)) {
-                        
+
                     }
                 }
             }
         }
+    };
+
+    this.getJointIndex = function (id) {
+        for (var i = 0; i < this.joints.length; i++) {
+            if (this.joints[i].id === id) {
+                return i;
+            }
+        }
+        return -1;
     };
 
     this.setUpJoints = function () {
@@ -49,6 +82,7 @@ function Element(x, y, name) {
             joint.hasElement = true;
             this.joints.push(joint);
         }
+        this.netElement.setUpNodes(length);
     };
 
     this.detach = function () {
@@ -59,7 +93,7 @@ function Element(x, y, name) {
         }
     };
 
-    this.rotate = function () {
+    this.rotate = function () { //Przeciwnie do wskazówek zegara
         if (!this.placed) {
             var tmp;
             this.direction = (this.direction + 1) % 4;
@@ -87,6 +121,7 @@ function Element(x, y, name) {
                 this.joints[i] = this.joints[i + 1];
                 this.joints[i + 1] = tmp;
             }
+            this.netElement.rotate();
         }
     };
 
@@ -207,9 +242,9 @@ function Element(x, y, name) {
             if (i !== this.joints.length - 1) {
                 joints += "|";
             }
-        }
+        }        
         return "e:" + this.id + ":" + this.name + ":" + Math.floor(this.x / scale) + ":" + Math.floor(this.y / scale)
-                + ":" + this.direction + ":" + joints;
+                + ":" + this.direction + ":" + joints + ":" + this.netElement.saveMe();
     };
 
     this.showMe = function () { //DO TESTOW

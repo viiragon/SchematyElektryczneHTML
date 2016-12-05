@@ -18,7 +18,8 @@ var elementNamesList = ["spstToggle", "spdtToggle", "buttonSwitchNO", "buttonSwi
             , "voltmeter", "ammeter", "ohmmeter", "wattmeter"
             , "diode", "zenDiode", "schDiode", "variDiode", "tunnelDiode", "led", "photodiode"
             , "npn", "pnp", "jfetn", "jfetp", "nmos", "pmos"
-            , "motor", "transformer", "lamp", "fuse", "amplifier"];
+            , "motor", "transformer", "lamp", "fuse", "amplifier"
+            , "acSimulation", "dcSimulation"];
 var imageList = [];
 
 var elementConstructorTable;
@@ -29,13 +30,31 @@ var classLoaded = 0;
 var DEBUG = false;
 var ENABLE_BACKGROUND = true;
 var ENABLE_CROPPING = false;
+var ENABLE_KEYBOARD = true;
+
+var TMP_DIAGRAM_NAME = "TMP";
+
+var SERVER_ADDRESS = "http://localhost/";
+var IS_SERVER_WORKING = false;
 
 loadImages();
+checkIfServerIsWorking();
 
 if (window.onload === null) {   //Jeżeli nie użyty zostal skrypt Loader.js
     window.onload = function () {
         prepareDocument();
     };
+}
+
+//Wyłączanie menu kontekstowego prawego przycisku
+if (document.addEventListener) { // IE >= 9 + wyszystko inne
+    document.addEventListener('contextmenu', function (e) {
+        e.preventDefault();
+    }, false);
+} else { // IE < 9
+    document.attachEvent('oncontextmenu', function () {
+        window.event.returnValue = false;
+    });
 }
 
 function loadImages() {
@@ -70,7 +89,7 @@ var mx, my;     //Mouse x and y
 
 var diagram;
 
-var click;  //Czy wcisnieta mysz
+var leftClick, rightClick;  //Czy wcisnieta mysz
 
 var placingId = 0;  //Co kładziemy
 
@@ -87,7 +106,7 @@ function prepareDocument() {
     dc = dl.getContext("2d");
     svl = document.getElementById("downloadLayer");
     svc = svl.getContext("2d");
-    click = false;
+    leftClick = false;
     plane.width = bgl.width = dl.width = svl.width = $(window).width();
     plane.height = bgl.height = dl.height = svl.height = $(window).height();
     diagram = new Diagram(bgl.width, bgl.height);
@@ -98,18 +117,35 @@ function prepareDocument() {
         mouseMovement();
         diagram.drawWorkingLayer(dl, dc, mx, my);
     });
-    $("#plane").mousedown(function () {
-        click = true;
-        mouseClicked();
+    $("#plane").mousedown(function (evt) {
+        switch (evt.which) {
+            case 1:
+                leftClick = true;
+                leftMouseClicked();
+                break;
+            case 3:
+                rightClick = true;
+                rightMouseClicked();
+                break;
+        }
         diagram.drawWorkingLayer(dl, dc, mx, my);
     });
-    $("#plane").mouseup(function () {
-        mouseReleased();
-        diagram.drawBackground(bgl, bgc);
-        click = false;
+    $("#plane").mouseup(function (evt) {
+        switch (evt.which) {
+            case 1:
+                leftMouseReleased();
+                diagram.drawBackground(bgl, bgc);
+                leftClick = false;
+                break;
+            case 3:
+                rightMouseReleased();
+                diagram.drawBackground(bgl, bgc);
+                rightClick = false;
+                break;
+        }
     });
     window.addEventListener("keydown", function (evt) {
-        if (!keyPressed) {
+        if (!keyPressed && ENABLE_KEYBOARD) {
             keyboardPressed(evt.keyCode);
             diagram.drawWorkingLayer(dl, dc, mx, my);
             diagram.drawBackground(bgl, bgc);
@@ -117,7 +153,7 @@ function prepareDocument() {
         }
     }, false);
     window.addEventListener("keyup", function (evt) {
-        if (keyPressed) {
+        if (keyPressed && ENABLE_KEYBOARD) {
             keyboardReleased(evt.keyCode);
             diagram.drawWorkingLayer(dl, dc, mx, my);
             diagram.drawBackground(bgl, bgc);
@@ -142,7 +178,7 @@ function prepareDocument() {
         }
     });
 
-    var diagramData = getCookieDiagram();
+    var diagramData = getCookieDiagram(TMP_DIAGRAM_NAME);
     if (diagramData !== "") {
         console.log("Diagram save data found in cookies. Loading cookie diagram");
         diagram.loadDiagram(diagramData);
@@ -172,10 +208,6 @@ function keyboardPressed(key) {
         case 53:    //1 - 5
             elementChoosers[key - 49].myClick();
             break;
-        case 16:    //SHIFT
-            tmpMode = mode;
-            mode = MODE_MOVE;
-            break;
         case 17:    //CTRL
             mode = MODE_NORMAL;
             break;
@@ -190,12 +222,19 @@ function keyboardPressed(key) {
         case 82:    //R
             diagram.rotateElement(mx, my);
             break;
+        case 83:    //S
+            saveDiagramToFile();
+            break;
+        case 73:    //I
+            saveImage();
+            break;
         case 67:    //C
             if (confirm("Do you want to load a diagram from cookies?\nAny unsaved progress will be lost!")) {
                 loadDiagramFromCookie();
             }
         case 68:    //D
             DEBUG = !DEBUG;
+            console.log(diagram.getDiagramNetlist());
             break;
     }
 }
@@ -218,17 +257,22 @@ var tmpMx = 0, tmpMy = 0;
 var diagramMoving = false;
 
 function mouseMovement() {
-    if (click === true) {
+    if (leftClick) {
         if (!diagramMoving) {
             diagram.moveEdited(mx, my);
         } else {
             diagram.moveDiagram(tmpMx + mx, tmpMy + my);
             diagram.drawBackground(bgl, bgc);
         }
+    } else if (rightClick) {
+        if (diagramMoving) {
+            diagram.moveDiagram(tmpMx + mx, tmpMy + my);
+            diagram.drawBackground(bgl, bgc);
+        }
     }
 }
 
-function mouseClicked() {
+function leftMouseClicked() {
     if (!diagram.checkGUIInPlace(mx, my)) {
         switch (mode) {
             case MODE_NORMAL:
@@ -250,8 +294,26 @@ function mouseClicked() {
     }
 }
 
-function mouseReleased() {
+
+function rightMouseClicked() {
+    //console.log(diagram.getDiagramNetlist());
+    if (!leftClick) {
+        if (!diagram.checkVariableListsInPlace(mx, my)) {
+            diagramMoving = true;
+            tmpMx = diagram.xoffset - mx;
+            tmpMy = diagram.yoffset - my;
+        }
+    } else {
+        diagram.rotateElement(mx, my);
+    }
+}
+
+function leftMouseReleased() {
     diagram.discardEdited();
+    diagramMoving = false;
+}
+
+function rightMouseReleased() {
     diagramMoving = false;
 }
 
@@ -270,6 +332,10 @@ function getImage(name) {
         }
     }
     return null;
+}
+
+function refreshDrawingLayer() {
+    diagram.drawWorkingLayer(dl, dc, mx, my);
 }
 
 function saveImage() {
@@ -293,36 +359,71 @@ function saveDiagramToFile() {
 }
 
 function saveDiagramToCookie() {
-    setCookieDiagram(diagram.saveDiagram());
+    setCookieDiagram(TMP_DIAGRAM_NAME, diagram.saveDiagram());
 }
 
 function loadDiagramFromCookie() {
-    diagram.loadDiagram(getCookieDiagram());
+    diagram.loadDiagram(getCookieDiagram(TMP_DIAGRAM_NAME));
     diagram.drawBackground(bgl, bgc);
 }
 
-function setCookieDiagram(text) {
+function setCookieDiagram(name, text) {
     var d = new Date();
     d.setTime(d.getTime() + (3650 * 24 * 60 * 60 * 1000));  //10 lat do przodu.... :D
     var expires = "expires=" + d.toUTCString();
-    document.cookie = "diagramSave=" + text + "; " + expires;
+    document.cookie = "diagram" + name + "Save=" + text + "; " + expires;
 }
 
-function getCookieDiagram() {
-    var name = "diagramSave=";
+function getCookieDiagram(name) {
+    var cookieName = "diagram" + name + "Save=";
     var ca = document.cookie.split(';');
     for (var i = 0; i < ca.length; i++) {
         var c = ca[i];
         while (c.charAt(0) === ' ')
             c = c.substring(1);
-        if (c.indexOf(name) === 0)
-            return c.substring(name.length, c.length);
+        if (c.indexOf(cookieName) === 0)
+            return c.substring(cookieName.length, c.length);
     }
     return "";
 }
 
-function deleteCookieDiagram() {
-    document.cookie = "diagramSave=; expires=Thu, 01 Jan 1970 00:00:00 UTC";
+function deleteCookieDiagram(name) {
+    document.cookie = "diagram" + name + "Save=; expires=Thu, 01 Jan 1970 00:00:00 UTC";
+}
+
+function checkIfServerIsWorking() {
+    $.get(SERVER_ADDRESS + "isActive.py", function (data) {
+        if (data["status"] === "OK") {
+            IS_SERVER_WORKING = true;
+            /*calculateNetlist(['Vac:V1 in gnd U="1 V" f="1 kHz"'
+             , 'R:R1 out in R="1 kOhm"'
+             , 'C:C1 out gnd C="10 nF"'
+             , '.AC:AC1 Type="log" Start="1 Hz" Stop="10 MHz" Points="300" Noise="no"']);*/
+        }
+    }, "json").fail(function (data) {
+        console.log("Brak połączenia z serwerem : " + data.status);
+        IS_SERVER_WORKING = false;
+    });
+}
+
+function calculateNetlist(netlist) {
+    if (IS_SERVER_WORKING) {
+        $.post(SERVER_ADDRESS + "calculate.py", {netlist: netlist}, function (data) {
+            alert(data["status"] + " :D");
+        }, "json").fail(function (data) {
+            switch (data.status) {
+                case 404:
+                    alert("Wystąpił problem podczas próby połączenia się z serwerem. Spróbuj ponownie");
+                    break;
+                case 500:
+                    alert("Błąd serwera?... Wzywaj admina!");
+                    break;
+                default:
+                    alert("Wystąpił niespodziewany błąd. Spróbuj ponownie");
+                    break;
+            }
+        });
+    }
 }
 
 function reloadDiagram() {

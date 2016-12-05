@@ -21,6 +21,14 @@ canvas {
     display: none;
     opacity: 0;
 }
+#text {
+    position: absolute;
+    z-index: 4;
+    display: none;
+    font-size: 15px;
+    background-color: white;
+    //opacity: 0;
+}
 #loading {
     position: absolute;
     width: 100%;
