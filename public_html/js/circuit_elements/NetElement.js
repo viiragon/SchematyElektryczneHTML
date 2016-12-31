@@ -18,16 +18,20 @@ function getNetNodeId() {
 }
 
 function getIdString(begining, id) {
-    var text = begining;
-    while (true) {
-        text += String.fromCharCode((id % 10) + 65);
-        if (id === 0 || id < 10) {
-            break;
-        } else {
-            id = Math.floor(id / 10);
+    if (begining === "n" && id === 0) {
+        return "gnd";
+    } else {
+        var text = begining;
+        while (true) {
+            text += String.fromCharCode((id % 10) + 65);
+            if (id === 0 || id < 10) {
+                break;
+            } else {
+                id = Math.floor(id / 10);
+            }
         }
+        return text;
     }
-    return text;
 }
 
 function NetElement(netName, owner) {
@@ -39,11 +43,15 @@ function NetElement(netName, owner) {
     this.netParametersIDs = [];
     this.netParametersValues = [];
     this.netParametersNames = [];
+    this.netParametersLists = [];
 
     this.listGUI = null;
 
     this.setUpList = function () {
-        this.listGUI = new VariablesList(this.element.name, this.netParametersNames, this.netParametersValues, this);
+        this.listGUI = new VariablesList(this.element.name
+                , this.netParametersNames
+                , this.netParametersValues
+                , this.netParametersLists, this);
     };
 
     this.addList = function () {

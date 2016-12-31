@@ -419,6 +419,7 @@ function Diagram(width, height) {
     elementConstructorTable = [
         "acSimulation", ACSimulation,
         "dcSimulation", DCSimulation,
+        "diode", Diode,
         "resistorIEEE", Resistor,
         "resistorIEC", Resistor,
         "capacitor", Capacitor,

@@ -27,6 +27,7 @@ function ACSimulation(x, y, name) {
     net.netParametersIDs = ["Start", "Stop", "Points", "Type"];
     net.netParametersValues = ["1 Hz", "10 MHz", "100", "log"];
     net.netParametersNames = ["Starting frequency", "Ending frequency", "Num. of simulation steps", "Sweep type"];
+    net.netParametersLists = [3, ["log", "lin", "list", "const"]];
     net.setUpList();
     
     return sim;

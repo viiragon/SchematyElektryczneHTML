@@ -12,10 +12,9 @@ function ChangableText(x, y, minimalWidth, text) {
     gui.color = 'white';
     gui.text = text;
     gui.input = document.getElementById("text");
+    gui.list = document.getElementById("list");
     gui.input.owner = null;
     gui.minimalWidth = minimalWidth;
-
-    //REGEX : ^[0-9]+([.][0-9]+){0,1}( (a|f|p|n|u|m|k|M|G|T){0,1}(W|A|V|Hz|F|H|K|S|s|Ohm)){0,1}$
 
     gui.onTextLostFocus = function () {
         this.hideInput();
@@ -30,7 +29,7 @@ function ChangableText(x, y, minimalWidth, text) {
     };
 
     gui.checkText = function (text) {
-        return text.match(/^[0-9]+([.][0-9]+){0,1}( (a|f|p|n|u|m|k|M|G|T){0,1}(W|A|V|Hz|F|H|K|S|s|Ohm)){0,1}$/g);
+        return text.match(/^(([0-9]+([.][0-9]+){0,1})|([0-9]e-[0-9]+))( (a|f|p|n|u|m|k|M|G|T){0,1}(W|A|V|Hz|F|H|K|S|s|Ohm)){0,1}$/g);
     };
 
     gui.hideInput = function () {
@@ -54,6 +53,7 @@ function ChangableText(x, y, minimalWidth, text) {
             this.input.style.height = this.height / 1.3 + "px";
             this.input.style.top = this.y + "px";
             this.input.style.left = this.x + "px";
+            this.input.style.fontSize = 2 * scale + "px";
             if (error) {
                 this.input.style.backgroundColor = "tomato";
                 this.input.title = "Not valid unit format (number + unit)";
@@ -111,8 +111,8 @@ function ChangableText(x, y, minimalWidth, text) {
 
         ctx.font = 2 * scale + "px " + defaultFont;
         ctx.fillStyle = "black";
-        ctx.textAlign = "center";
-        ctx.fillText(this.text, this.x + this.width / 2,
+        ctx.textAlign = "left";
+        ctx.fillText(this.text, this.x + scale,
                 this.y + this.height / 1.3);
     };
 

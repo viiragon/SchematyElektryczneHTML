@@ -4,9 +4,18 @@
  * and open the template in the editor.
  */
 
-/* global scale, halfScale, defaultFont, dc */
+/* global scale, halfScale, defaultFont, dc, ChangableText, ChangableList */
 
-function VariablesList(name, names, values, netElement) {
+function getListFromId(list, index) {
+    for (var i = 0; i < list.length; i += 2) {
+        if (list[i] === index) {
+            return list[i + 1];
+        }
+    }
+    return null;
+}
+
+function VariablesList(name, names, values, lists, netElement) {
     var gui = new GuiElement(0, 0, 0, 0, false);
     gui.name = name;
     gui.names = names;
@@ -22,13 +31,24 @@ function VariablesList(name, names, values, netElement) {
         }
     }
     for (var i = 0; i < values.length; i++) {
-        var text = new ChangableText(gui.nameOffset + 4 * scale, 4.75 * scale + i * 4 * scale, 10 * scale, values[i]);
-        text.valueId = i;
-        text.onTextChange = function () {
-            values[this.valueId] = this.text;
-            gui.refreshWidth();
-        };
-        gui.childs.push(text);
+        var list = getListFromId(lists, i);
+        var element;
+        if (list !== null) {
+            element = new ChangableList(gui.nameOffset + 4 * scale, 4.75 * scale + i * 4 * scale, 10 * scale
+                                        , list, values[i]);
+            element.valueId = i;
+            element.onTextChange = function () {
+                values[this.valueId] = this.text;
+            };
+        } else {
+            element = new ChangableText(gui.nameOffset + 4 * scale, 4.75 * scale + i * 4 * scale, 15 * scale, values[i]);
+            element.valueId = i;
+            element.onTextChange = function () {
+                values[this.valueId] = this.text;
+                gui.refreshWidth();
+            };
+        }
+        gui.childs.push(element);
     }
     gui.setUpChildren();
 
@@ -38,7 +58,12 @@ function VariablesList(name, names, values, netElement) {
 
     gui.refreshText = function (values) {
         for (var i = 0; i < values.length; i++) {
-            this.childs[i].text = values[i];
+            if (this.childs[i] instanceof ChangableText) {
+                this.childs[i].text = values[i];
+            } else if (this.childs[i] instanceof ChangableList) {
+                console.log("opt " + values[i]);
+                this.childs[i].selectOption(values[i]);
+            }
         }
     };
 

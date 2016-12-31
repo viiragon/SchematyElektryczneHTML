@@ -29,6 +29,14 @@ canvas {
     background-color: white;
     //opacity: 0;
 }
+#list {
+    position: absolute;
+    z-index: 4;
+    display: none;
+    font-size: 15px;
+    background-color: white;
+    //opacity: 0;
+}
 #loading {
     position: absolute;
     width: 100%;

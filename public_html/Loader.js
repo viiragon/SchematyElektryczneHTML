@@ -9,11 +9,12 @@ var classList = [
     ["circuit_elements/", "Joint", "Element", "NetElement", "Simulation"],
     ["circuit_elements/element_creators/", "LineElement", "Potentiometr", "SpstToggle", "Ground", "Transformer", "TranNP", "TranjFet", "TranMos", "Amplifier"],
     ["drawing_elements/", "LinePlacer", "GuiElement", "Cropper", "Deleter"],
-    ["drawing_elements/GUI/", "ToolsGUI", "ToolsAppearer", "FileGUI", "FileAppearer", "ListAppearer", "ListGUI", "ChangableText", "VariablesList"],
+    ["drawing_elements/GUI/", "ToolsGUI", "ToolsAppearer", "FileGUI", "FileAppearer", "ListAppearer", "ListGUI"],
+    ["drawing_elements/GUI/parameters/", "ChangableText", "ChangableList", "VariablesList"],
     ["drawing_elements/GUI/choices/", "ChoiceTemplate"],
     ["drawing_elements/GUI/choices/tools/", "ChooseNormal", "ChooseDelete", "ChooseElement", "ChooseWires", "ChooseMoving"],
     ["drawing_elements/GUI/choices/file/", "ChooseSaveAsPNG", "ChooseBackground", "ChooseCrop", "ChooseEnableCrop"
-                , "ChooseAutoCrop", "ChooseLoadDiagram", "ChooseSaveAsFile", "ChooseNewDiagram", "ChooseHelp"]
+                , "ChooseAutoCrop", "ChooseLoadDiagram", "ChooseSaveAsFile", "ChooseNewDiagram", "ChooseHelp", "ChooseSimulate"]
 ];
 
 var loading = 0;

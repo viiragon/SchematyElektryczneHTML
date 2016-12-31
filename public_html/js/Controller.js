@@ -406,11 +406,64 @@ function checkIfServerIsWorking() {
     });
 }
 
-function calculateNetlist(netlist) {
+var IS_WAITING_FOR_CALCULATION = false;
+var calculatedData;
+
+function simulate() {
+    var diagram = getNetlist();
+    calculateNetlist(diagram, function (data) {
+        var list = (typeof data) + "\n";
+        for (var key in data) {
+            if (data.hasOwnProperty(key)) {
+                list += key + " :";
+                var isDict = !(Array.isArray(data[key]));
+                for (var item in data[key]) {
+                    if (isDict) {
+                        list += " (" + item + ": " + data[key][item] + ")";
+                    } else {
+                        list += " " + data[key][item];
+                    }
+                }
+                list += "\n";
+            }
+        }
+        alert(list);
+    });
+}
+
+function calculateNetlist(netlist, action) {
     if (IS_SERVER_WORKING) {
+        IS_WAITING_FOR_CALCULATION = true;
         $.post(SERVER_ADDRESS + "calculate.py", {netlist: netlist}, function (data) {
-            alert(data["status"] + " :D");
+            IS_WAITING_FOR_CALCULATION = false;
+            var calculatedData = {};
+            for (var key in data) {
+                if (data.hasOwnProperty(key)) {
+                    if (Array.isArray(data[key])) {
+                        calculatedData[key] = [];
+                        var regex = /[+-]?\d+(\.\d+)?/g;
+                        for (var item in data[key]) {
+                            if (data[key][item].charAt(0) === 'c') {
+                                var floats = data[key][item].match(regex).map(function(v) { return parseFloat(v); })
+                                if (floats.length > 1) {
+                                    calculatedData[key][item] = floats[0];
+                                } else {
+                                    calculatedData[key][item] = 0.0;
+                                }
+                            } else {
+                                calculatedData[key][item] = parseFloat(data[key][item]);
+                            }
+                        }
+                    } else {
+                        calculatedData[key] = data[key];
+                    }
+                }
+            }
+            if (typeof action !== 'undefined') {
+                action(calculatedData);
+            }
         }, "json").fail(function (data) {
+            IS_WAITING_FOR_CALCULATION = false;
             switch (data.status) {
                 case 404:
                     alert("Wystąpił problem podczas próby połączenia się z serwerem. Spróbuj ponownie");
@@ -424,6 +477,19 @@ function calculateNetlist(netlist) {
             }
         });
     }
+}
+
+function isServerCalculating() {
+    return IS_SERVER_WORKING && IS_WAITING_FOR_CALCULATION;
+}
+
+function getCalculatedData() {
+    var data = null;
+    if (!isServerCalculating()) {
+        data = calculatedData;
+        calculatedData = null;
+    }
+    return data;
 }
 
 function reloadDiagram() {

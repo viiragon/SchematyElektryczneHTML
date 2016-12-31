@@ -16,6 +16,7 @@ function ChoiceTemplate(x, y, width, type) {
         gui = new GuiElement(x, y, width - 4 * scale, type === TEXT_CHOICE ? 5 * scale : 3 * scale, true);
     }
     gui.color = 'white';
+    gui.textColor = 'black';
 
     gui.myMouseOver = function (x, y) {
         gui.color = 'lightgray';
@@ -40,7 +41,7 @@ function ChoiceTemplate(x, y, width, type) {
             ctx.stroke();
 
             ctx.font = 2 * scale + "px " + defaultFont;
-            ctx.fillStyle = "black";
+            ctx.fillStyle = this.textColor;
             ctx.textAlign = "center";
             ctx.fillText(this.getValue(), this.x + this.width / 2,
                     this.y + scale * 3);
@@ -94,7 +95,7 @@ function ChoiceTemplate(x, y, width, type) {
             }
 
             ctx.font = 2 * scale + "px " + defaultFont;
-            ctx.fillStyle = "black";
+            ctx.fillStyle = this.textColor;
             ctx.textAlign = "left";
             ctx.fillText(this.getValue(), this.x + 4 * scale,
                     this.y + scale * 2);

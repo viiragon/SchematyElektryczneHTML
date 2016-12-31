@@ -28,7 +28,7 @@ function Resistor(x, y, name) {
     net.netParametersValues = ["1 kOhm", "26.85"];
     net.netParametersNames = ["Resistance", "Temperature"];
     net.setUpList();
-    
+
     return element;
 }
 
@@ -41,7 +41,7 @@ function Capacitor(x, y, name) {
     net.netParametersValues = ["1 nF", "0 V"];
     net.netParametersNames = ["Capacity", "Init. Voltage"];
     net.setUpList();
-    
+
     return element;
 }
 
@@ -54,7 +54,7 @@ function Inductor(x, y, name) {
     net.netParametersValues = ["1 nH", "0 A"];
     net.netParametersNames = ["Inductance", "Init. Current"];
     net.setUpList();
-    
+
     return element;
 }
 
@@ -67,7 +67,21 @@ function DCVoltageSource(x, y, name) {
     net.netParametersValues = ["1 V"];
     net.netParametersNames = ["Voltage"];
     net.setUpList();
-    
+
+    return element;
+}
+
+function Diode(x, y, name) {
+    var element = LineElement(x, y, name);
+
+    var net = element.getNetElement();
+    net.netName = "Diode";
+    net.netParametersIDs = ["Is", "N", "Cj0", "M", "Vj"];
+    net.netParametersValues = ["1e-15 A", "1", "10 fT", "0.5", "0.7 V"];
+    net.netParametersNames = ["Saturation current", "Emission coefficient"
+        , "Zero-bias junction capacitance", "Grading coefficient", "Junction potential"];
+    net.setUpList();
+
     return element;
 }
 
