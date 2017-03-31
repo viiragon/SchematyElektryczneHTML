@@ -17,13 +17,6 @@ function ChangableList(x, y, minimalWidth, list, text) {
     gui.input.owner = null;
     gui.minimalWidth = minimalWidth;
 
-    gui.onTextLostFocus = function () {
-        this.hideInput();
-        this.text = this.input.options[this.input.selectedIndex].value;
-        this.onTextChange();
-        refreshDrawingLayer();
-    };
-
     gui.hideInput = function () {
         this.input = document.getElementById("list");
         this.input.style.display = "none";
@@ -35,32 +28,46 @@ function ChangableList(x, y, minimalWidth, list, text) {
         this.input.owner = null;
     };
 
+    gui.onTextLostFocus = function () {
+        this.hideInput();
+        this.text = this.input.options[this.input.selectedIndex].value;
+        this.onTextChange();
+        refreshDrawingLayer();
+    };
+
     gui.showInput = function (text) {
         if (this.input.owner !== this) {
             if (this.input.owner !== null) {
                 this.input.owner.onTextLostFocus();
             }
             this.input.style.display = "block";
-            this.input.style.width = this.width / 1.1 + "px";
-            this.input.style.height = this.height / 1.3 + "px";
+            this.input.style.width = this.width + "px";
+            this.input.style.height = this.height + "px";
             this.input.style.top = this.y + "px";
             this.input.style.left = this.x + "px";
             this.input.style.fontSize = 2 * scale + "px";
             this.input.value = text;
-            this.input.onblur = this.onTextLostFocus;
+            this.input.onblur = function () {
+                this.owner.onTextLostFocus();
+            };
             this.clearInput();
             this.fillInputAndSelect(text);
+            this.input.owner = this;
             this.input.onkeypress = function (evt) {
                 var code = (evt.keyCode ? evt.keyCode : evt.which);
                 if (code === 13) { //Enter keycode                        
                     evt.preventDefault();
-                    gui.onTextLostFocus();
+                    this.owner.onTextLostFocus();
                 } else if (code === 27) {   //ESC
                     evt.preventDefault();
-                    gui.hideInput();
+                    this.owner.hideInput();
                 }
             };
-            this.input.owner = this;
+            this.input.onselect = function (evt) {
+                console.log("JUP");
+                evt.preventDefault();
+                this.owner.onTextLostFocus();
+            };
             ENABLE_KEYBOARD = false;
         }
     };
@@ -98,15 +105,14 @@ function ChangableList(x, y, minimalWidth, list, text) {
         dc.font = 2 * scale + "px " + defaultFont;
         var newWidth = this.minimalWidth;
         var tmp;
-        for (var i = 0; i < list.length; i++) {
-            tmp = dc.measureText(list[i]).width + 2 * scale;
+        for (var i = 0; i < this.list.length; i++) {
+            tmp = dc.measureText(this.list[i]).width + 2 * scale;
             if (tmp > newWidth) {
                 newWidth = tmp;
             }
         }
         this.width = newWidth;
     };
-    gui.resizeToText();
 
     gui.myMouseOver = function (x, y) {
         this.color = 'lightgray';
@@ -129,6 +135,9 @@ function ChangableList(x, y, minimalWidth, list, text) {
                 this.y + this.height / 1.3);
     };
 
+    if (gui.list !== null) {
+        gui.resizeToText();
+    }
     return gui;
 }
 

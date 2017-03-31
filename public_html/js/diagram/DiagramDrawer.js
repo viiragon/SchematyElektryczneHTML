@@ -52,6 +52,18 @@ function extendDiagramByDrawing(diagram) {
         bgc.restore();
     };
 
+    diagram.drawChartForImage = function (bgl, bgc) {
+        bgl.width = this.simulationGUI.getChartWidth();
+        bgl.height = this.simulationGUI.getChartHeight();
+        bgc.save();
+        bgc.beginPath();
+        bgc.rect(0, 0, bgl.width, bgl.height);
+        bgc.fillStyle = 'white';
+        bgc.fill();
+        this.simulationGUI.drawChartForImage(bgc);
+        bgc.restore();
+    };
+
     diagram.drawOnlyBackground = function (bgl, bgc) {
         for (var i = 0; i < this.joints.length; i++) {
             this.joints[i].drawMe(bgl, bgc);
@@ -60,6 +72,9 @@ function extendDiagramByDrawing(diagram) {
             if (this.elements[i].placed) {
                 this.elements[i].drawMe(bgl, bgc);
             }
+        }
+        for (var i = 0; i < this.netJoints.length; i++) {
+            this.netJoints[i].drawMe(bgl, bgc);
         }
     };
 
@@ -91,7 +106,8 @@ function extendDiagramByDrawing(diagram) {
                 }
             }
         } else {
-            if (!this.highlightJoints(dl, dc, mx, my, this.edited)
+            if (!this.highlightNetJoints(dl, dc, mx, my)
+                    && !this.highlightJoints(dl, dc, mx, my, this.edited)
                     && !this.highlightElements(dl, dc, mx, my, this.edited)
                     && mode === MODE_JOINTS) {
                 this.drawJoint(dl, dc, mx, my);
@@ -102,11 +118,18 @@ function extendDiagramByDrawing(diagram) {
             mx += this.xoffset;
             my += this.yoffset;
         }
-        for (var i = 0; i < this.GUI.length; i++) {
-            if (this.edited.id === null) {
-                this.GUI[i].onMouseOver(mx, my);
+        if (!this.simulationGUI.visible) {
+            for (var i = 0; i < this.GUI.length; i++) {
+                if (this.edited.id === null) {
+                    this.GUI[i].onMouseOver(mx, my);
+                }
+                this.GUI[i].drawMe(dl, dc);
             }
-            this.GUI[i].drawMe(dl, dc);
+        } else {
+            if (this.edited.id === null) {
+                this.simulationGUI.onMouseOver(mx, my);
+            }
+            this.simulationGUI.drawMe(dl, dc);
         }
         this.drawCursor(dl, dc, mx, my);
     };
@@ -145,6 +168,17 @@ function extendDiagramByDrawing(diagram) {
                 if (this.joints[i].highlightMe(mx, my, dl, dc)) {
                     return true;
                 }
+            }
+        }
+        return false;
+    };
+
+    diagram.highlightNetJoints = function (dl, dc, mx, my) {
+        mx = Math.floor(mx / scale) * scale;
+        my = Math.floor(my / scale) * scale;
+        for (var i = 0; i < this.netJoints.length; i++) {
+            if (this.netJoints[i].highlightMe(mx, my, dl, dc)) {
+                return true;
             }
         }
         return false;

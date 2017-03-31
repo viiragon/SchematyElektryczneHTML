@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* global scale, CON_RIGHT, CON_LEFT, CON_UP, CON_DOWN, TO_RADIANS */
+/* global scale, CON_RIGHT, CON_LEFT, CON_UP, CON_DOWN, TO_RADIANS, NULL_NODE */
 
 function Ground(x, y, name) {
     var element = new Element(x, y, name);
@@ -12,7 +12,14 @@ function Ground(x, y, name) {
     element.width = 8 * scale;
     element.placements = [0, -element.width / 2];
     element.attachments = [CON_DOWN];
+    element.isGround = true;
     element.setUpJoints();
+
+    element.setUpNetNodes = function () {
+        for (var i = 0; i < this.joints.length; i++) {
+            this.joints[i].spreadNodeName("gnd");
+        }
+    };
 
     return element;
 }

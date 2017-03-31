@@ -27,6 +27,7 @@ function Resistor(x, y, name) {
     net.netParametersIDs = ["R", "Temp"];
     net.netParametersValues = ["1 kOhm", "26.85"];
     net.netParametersNames = ["Resistance", "Temperature"];
+    net.netParametersVisibility = [true, false];
     net.setUpList();
 
     return element;
@@ -40,6 +41,7 @@ function Capacitor(x, y, name) {
     net.netParametersIDs = ["C", "V"];
     net.netParametersValues = ["1 nF", "0 V"];
     net.netParametersNames = ["Capacity", "Init. Voltage"];
+    net.netParametersVisibility = [true, false];
     net.setUpList();
 
     return element;
@@ -53,6 +55,7 @@ function Inductor(x, y, name) {
     net.netParametersIDs = ["L", "I"];
     net.netParametersValues = ["1 nH", "0 A"];
     net.netParametersNames = ["Inductance", "Init. Current"];
+    net.netParametersVisibility = [true, false];
     net.setUpList();
 
     return element;
@@ -66,6 +69,21 @@ function DCVoltageSource(x, y, name) {
     net.netParametersIDs = ["U"];
     net.netParametersValues = ["1 V"];
     net.netParametersNames = ["Voltage"];
+    net.netParametersVisibility = [true];
+    net.setUpList();
+
+    return element;
+}
+
+function ACVoltageSource(x, y, name) {
+    var element = NonRotableLineElement(x, y, name);
+
+    var net = element.getNetElement();
+    net.netName = "Vac";
+    net.netParametersIDs = ["U", "f"];
+    net.netParametersValues = ["1 V", "1 MHz"];
+    net.netParametersNames = ["Peak voltage", "Frequency"];
+    net.netParametersVisibility = [true, true];
     net.setUpList();
 
     return element;
@@ -80,6 +98,7 @@ function Diode(x, y, name) {
     net.netParametersValues = ["1e-15 A", "1", "10 fT", "0.5", "0.7 V"];
     net.netParametersNames = ["Saturation current", "Emission coefficient"
         , "Zero-bias junction capacitance", "Grading coefficient", "Junction potential"];
+    net.netParametersVisibility = [false, false, false, false, false];
     net.setUpList();
 
     return element;

@@ -20,19 +20,19 @@ function Element(x, y, name) {
     this.direction = 0;
     this.placed = false;
     this.doubleRotatable = false;
+    this.isGround = false;
     this.name = name;
     this.image = getImage(name);
 
-    this.netElement = new NetElement("R", this);
+    this.netElement = new NetElement("ERROR", this);
 
     this.getNetElement = function () {
         return this.netElement;
     };
 
     this.setUpNetNodes = function () {
-        //console.log("Element " + this.id + " " + this.name);
         for (var i = 0; i < this.joints.length; i++) {
-            if (this.netElement.netNodes[i] === NULL_NODE) {
+            if (this.netElement.netNodes[i] === null) {
                 var nodeId = getNetNodeId();
                 this.joints[i].spreadNodeId(nodeId);
             }
@@ -135,8 +135,12 @@ function Element(x, y, name) {
 
     this.changePlaceTo = function (i, endJoint) {
         var joint = this.joints[i];
+        //console.log("DATA: " + joint.x + " " + joint.y + " -> " + endJoint.x + " " + endJoint.y);
+        //console.log("FROM: " + this.x + " " + this.y);
         this.setPos(this.x + endJoint.x - joint.x,
                 this.y + endJoint.y - joint.y);
+        //console.log("TO: " + this.x + " " + this.y);
+        //console.log("DATA: " + joint.x + " " + joint.y + " -> " + endJoint.x + " " + endJoint.y);
     };
 
     this.place = function (i, endJoint) {
@@ -153,7 +157,6 @@ function Element(x, y, name) {
         endJoint.joints[dir] = this;
         endJoint.responsible[dir] = false;
         endJoint.hasElement = true;
-        endJoint.simplify();
     };
 
     /*this.isPlaceable = function () {
@@ -233,6 +236,8 @@ function Element(x, y, name) {
             ctx.drawImage(this.image, -this.width / 2, -this.width / 2, this.width, this.width);
             ctx.restore();
         }
+        this.netElement.drawName(this.x - this.width / 2, this.y - 0.5 * this.width, c, ctx);
+        this.netElement.drawParametersList(this.x - this.width / 2, this.y + 0.7 * this.width, c, ctx);
     };
 
     this.saveMe = function () {

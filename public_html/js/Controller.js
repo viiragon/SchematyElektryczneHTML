@@ -35,10 +35,8 @@ var ENABLE_KEYBOARD = true;
 var TMP_DIAGRAM_NAME = "TMP";
 
 var SERVER_ADDRESS = "http://localhost/";
-var IS_SERVER_WORKING = false;
 
 loadImages();
-checkIfServerIsWorking();
 
 if (window.onload === null) {   //Jeżeli nie użyty zostal skrypt Loader.js
     window.onload = function () {
@@ -88,6 +86,7 @@ var svl, svc;   //Saving/Download layer object and context
 var mx, my;     //Mouse x and y
 
 var diagram;
+var files;
 
 var leftClick, rightClick;  //Czy wcisnieta mysz
 
@@ -97,6 +96,9 @@ var defaultFont = "Lucida Console";
 
 var keyPressed;
 var tmpMode = 0;
+
+var fileFunction = function (e) {
+};
 
 function prepareDocument() {
     var plane = document.getElementById("plane");
@@ -161,15 +163,14 @@ function prepareDocument() {
         }
     }, false);
 
-    var files = document.getElementById("files");
+    files = document.getElementById("files");
 
     files.addEventListener("change", function (evt) {
         var file = evt.target.files[0];
         if (file) {
             var reader = new FileReader();
             reader.onload = function (e) {
-                diagram.loadDiagram(e.target.result);
-                diagram.drawBackground(bgl, bgc);
+                fileFunction(e);
             };
             console.log("Loading file: " + file.name);
             reader.readAsText(file);
@@ -197,9 +198,9 @@ function prepareDocument() {
 }
 
 function keyboardPressed(key) {
-    if (DEBUG) {
+    /*if (DEBUG) {
         console.log("down: " + key);
-    }
+    }*/
     switch (key) {
         case 49:
         case 50:
@@ -234,15 +235,15 @@ function keyboardPressed(key) {
             }
         case 68:    //D
             DEBUG = !DEBUG;
-            console.log(diagram.getDiagramNetlist());
+            console.log(diagram.showReport());
             break;
     }
 }
 
 function keyboardReleased(key) {
-    if (DEBUG) {
+    /*if (DEBUG) {
         console.log("up: " + key);
-    }
+    }*/
     switch (key) {
         case 16:
         case 82:
@@ -348,14 +349,54 @@ function saveImage() {
     mode = tmp;
 }
 
+function saveChartImage() {
+    var tmp = mode;
+    mode = MODE_NORMAL;
+    diagram.drawChartForImage(svl, svc);
+    ReImg.fromCanvas(svl).downloadPng();
+    svl.width = $(window).width();
+    svl.height = $(window).height();
+    mode = tmp;
+}
+
 
 function clearDiagram() {
     diagram.clearDiagram();
     diagram.drawBackground(bgl, bgc);
 }
 
+function prepareGettingDiagramFile() {
+    files.accept = ".ddt";
+    fileFunction = function (e) {
+        diagram.loadDiagram(e.target.result);
+        diagram.drawBackground(bgl, bgc);
+    };
+}
+
 function saveDiagramToFile() {
     ReImg.fromDiagram(diagram.saveDiagram()).downloadFile();
+}
+
+function prepareGettingChartFile() {
+    files.accept = ".sdt";
+    fileFunction = function (e) {
+        try {
+            diagram.loadSimulationFromText(e.target.result);
+            diagram.drawBackground(bgl, bgc);
+            diagram.drawWorkingLayer(dl, dc, mx, my);
+        } catch (err) {
+            alert("Failed to read file\nWas that a chart data file?");
+            console.log(err);
+            return;
+        }
+    };
+}
+
+function saveChartToFile() {
+    var data = diagram.getSimulationData();
+    if (data !== null) {
+        ReImg.fromChart(data).downloadFile();
+    }
 }
 
 function saveDiagramToCookie() {
@@ -391,96 +432,104 @@ function deleteCookieDiagram(name) {
     document.cookie = "diagram" + name + "Save=; expires=Thu, 01 Jan 1970 00:00:00 UTC";
 }
 
-function checkIfServerIsWorking() {
+function runIfServerWorks(action) {
+    IS_WAITING_FOR_CALCULATION = true;
     $.get(SERVER_ADDRESS + "isActive.py", function (data) {
         if (data["status"] === "OK") {
-            IS_SERVER_WORKING = true;
-            /*calculateNetlist(['Vac:V1 in gnd U="1 V" f="1 kHz"'
-             , 'R:R1 out in R="1 kOhm"'
-             , 'C:C1 out gnd C="10 nF"'
-             , '.AC:AC1 Type="log" Start="1 Hz" Stop="10 MHz" Points="300" Noise="no"']);*/
+            action();
         }
     }, "json").fail(function (data) {
-        console.log("Brak połączenia z serwerem : " + data.status);
-        IS_SERVER_WORKING = false;
+        IS_WAITING_FOR_CALCULATION = false;
+        alert("No connection with the server....\nCheck your Internet connection and try again.");
+        console.log("NO CONNECTION : " + data.status);
     });
 }
 
 var IS_WAITING_FOR_CALCULATION = false;
 var calculatedData;
 
-function simulate() {
-    var diagram = getNetlist();
-    calculateNetlist(diagram, function (data) {
-        var list = (typeof data) + "\n";
-        for (var key in data) {
-            if (data.hasOwnProperty(key)) {
-                list += key + " :";
-                var isDict = !(Array.isArray(data[key]));
-                for (var item in data[key]) {
-                    if (isDict) {
-                        list += " (" + item + ": " + data[key][item] + ")";
-                    } else {
-                        list += " " + data[key][item];
-                    }
-                }
-                list += "\n";
-            }
-        }
-        alert(list);
-    });
-}
+var threadsWorking;
 
-function calculateNetlist(netlist, action) {
-    if (IS_SERVER_WORKING) {
-        IS_WAITING_FOR_CALCULATION = true;
-        $.post(SERVER_ADDRESS + "calculate.py", {netlist: netlist}, function (data) {
-            IS_WAITING_FOR_CALCULATION = false;
-            var calculatedData = {};
-            for (var key in data) {
-                if (data.hasOwnProperty(key)) {
-                    if (Array.isArray(data[key])) {
-                        calculatedData[key] = [];
-                        var regex = /[+-]?\d+(\.\d+)?/g;
-                        for (var item in data[key]) {
-                            if (data[key][item].charAt(0) === 'c') {
-                                var floats = data[key][item].match(regex).map(function(v) { return parseFloat(v); })
-                                if (floats.length > 1) {
-                                    calculatedData[key][item] = floats[0];
-                                } else {
-                                    calculatedData[key][item] = 0.0;
-                                }
-                            } else {
-                                calculatedData[key][item] = parseFloat(data[key][item]);
-                            }
-                        }
-                    } else {
-                        calculatedData[key] = data[key];
+function simulate() {
+    var check = diagram.getSimulationErrors();
+    if (check.length === 0) {
+        var netlist = getNetlist();
+        calculatedData = {};
+        runIfServerWorks(function () {
+            calculatedData["simulations"] = netlist["simulations"];
+            threadsWorking = netlist["simulations"].length;
+            for (var i = 0; i < netlist["simulations"].length; i++) {
+                var sim = netlist["simulations"][i];
+                calculateNetlist(netlist[sim.id], sim.id, function (data, id) {
+                    calculatedData[id] = data;
+                    threadsWorking--;
+                    if (threadsWorking === 0) {
+                        diagram.loadSimulation(calculatedData);
+                        diagram.drawWorkingLayer(dl, dc, mx, my);
+                        diagram.drawBackground(bgl, bgc);
                     }
-                }
-            }
-            if (typeof action !== 'undefined') {
-                action(calculatedData);
-            }
-        }, "json").fail(function (data) {
-            IS_WAITING_FOR_CALCULATION = false;
-            switch (data.status) {
-                case 404:
-                    alert("Wystąpił problem podczas próby połączenia się z serwerem. Spróbuj ponownie");
-                    break;
-                case 500:
-                    alert("Błąd serwera?... Wzywaj admina!");
-                    break;
-                default:
-                    alert("Wystąpił niespodziewany błąd. Spróbuj ponownie");
-                    break;
+                });
             }
         });
+    } else {
+        var ret = "This diagram cannot be simulated because:\n";
+        for (var i = 0; i < check.length; i++) {
+            ret += " - " + check[i] + "\n";
+        }
+        alert(ret);
     }
 }
 
+function calculateNetlist(netlist, id, action) {
+    IS_WAITING_FOR_CALCULATION = true;
+    $.post(SERVER_ADDRESS + "calculate.py", {netlist: netlist}, function (data) {
+        IS_WAITING_FOR_CALCULATION = false;
+        var tmpData = {};
+        for (var key in data) {
+            if (data.hasOwnProperty(key)) {
+                if (Array.isArray(data[key])) {
+                    tmpData[key] = [];
+                    var regex = /[+-]?\d+(\.\d+)?/g;
+                    for (var item in data[key]) {
+                        if (data[key][item].charAt(0) === 'c') {
+                            var floats = data[key][item].match(regex).map(function (v) {
+                                return parseFloat(v);
+                            });
+                            if (floats.length > 1) {
+                                tmpData[key][item] = Math.sqrt(floats[0] * floats[0] + floats[1] * floats[1]);
+                            } else {
+                                tmpData[key][item] = Math.abs(floats[0]);
+                            }
+                        } else {
+                            tmpData[key][item] = parseFloat(data[key][item]);
+                        }
+                    }
+                } else {
+                    tmpData[key] = data[key];
+                }
+            }
+        }
+        if (typeof action !== 'undefined') {
+            action(tmpData, id);
+        }
+    }, "json").fail(function (data) {
+        IS_WAITING_FOR_CALCULATION = false;
+        switch (data.status) {
+            case 404:
+                alert("Wystąpił problem podczas próby połączenia się z serwerem. Spróbuj ponownie");
+                break;
+            case 500:
+                alert("Błąd serwera?... Wzywaj admina!");
+                break;
+            default:
+                alert("Wystąpił niespodziewany błąd. Spróbuj ponownie");
+                break;
+        }
+    });
+}
+
 function isServerCalculating() {
-    return IS_SERVER_WORKING && IS_WAITING_FOR_CALCULATION;
+    return IS_WAITING_FOR_CALCULATION;
 }
 
 function getCalculatedData() {

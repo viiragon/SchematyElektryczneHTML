@@ -6,15 +6,16 @@
 
 var classList = [
     ["diagram/", "DiagramDrawer", "DiagramAdministration", "DiagramLoader"],
-    ["circuit_elements/", "Joint", "Element", "NetElement", "Simulation"],
+    ["circuit_elements/", "Joint", "Element", "NetElement", "Simulation", "NetJoint"],
     ["circuit_elements/element_creators/", "LineElement", "Potentiometr", "SpstToggle", "Ground", "Transformer", "TranNP", "TranjFet", "TranMos", "Amplifier"],
     ["drawing_elements/", "LinePlacer", "GuiElement", "Cropper", "Deleter"],
     ["drawing_elements/GUI/", "ToolsGUI", "ToolsAppearer", "FileGUI", "FileAppearer", "ListAppearer", "ListGUI"],
-    ["drawing_elements/GUI/parameters/", "ChangableText", "ChangableList", "VariablesList"],
+    ["drawing_elements/GUI/parameters/", "ChangableText", "ChangableList", "VariablesList", "ChangableName", "VisibilityButton"],
     ["drawing_elements/GUI/choices/", "ChoiceTemplate"],
     ["drawing_elements/GUI/choices/tools/", "ChooseNormal", "ChooseDelete", "ChooseElement", "ChooseWires", "ChooseMoving"],
     ["drawing_elements/GUI/choices/file/", "ChooseSaveAsPNG", "ChooseBackground", "ChooseCrop", "ChooseEnableCrop"
-                , "ChooseAutoCrop", "ChooseLoadDiagram", "ChooseSaveAsFile", "ChooseNewDiagram", "ChooseHelp", "ChooseSimulate"]
+                , "ChooseAutoCrop", "ChooseLoadDiagram", "ChooseLoadChart", "ChooseSaveAsFile", "ChooseNewDiagram", "ChooseHelp", "ChooseSimulate"],
+    ["drawing_elements/GUI/simulation/", "SimulationGUI", "ExitButton", "DiagramGUI", "ChooseSaveChartAsFile", "ChooseSaveChartAsPNG"]
 ];
 
 var loading = 0;

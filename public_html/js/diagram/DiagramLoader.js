@@ -59,6 +59,9 @@ function extendDiagramByLoading(diagram) {
         for (var i = 0; i < this.joints.length; i++) {
             ret += this.joints[i].saveMe() + sep;
         }
+        for (var i = 0; i < this.netJoints.length; i++) {
+            ret += this.netJoints[i].saveMe() + sep;
+        }
         for (var i = 0; i < this.simulation.length; i++) {
             ret += this.simulation[i].saveMe();
             if (i !== this.simulation.length - 1) {
@@ -68,11 +71,18 @@ function extendDiagramByLoading(diagram) {
         return ret;
     };
 
+    diagram.loadSimulationFromText = function (txt) {
+        var data = JSON.parse(txt);
+        this.loadSimulation(data);
+    };
+
     diagram.loadDiagram = function (txt) {
         var joints = [];
+        var netJoints = [];
         var elements = [];
         var simulations = [];
         var jointsInElements = [];
+        var uniqueNames = [];
 
         var tmpJointId, tmpElementId;
         var cropX, cropY, cropEx, cropEy;
@@ -97,7 +107,7 @@ function extendDiagramByLoading(diagram) {
             } else {
                 cropX = cropY = cropEx = cropEy = null;
             }
-            var tmp, innerLine;
+            var tmp, innerLine, border;
             for (var i = 3; i < data.length; i++) {
                 line = data[i].split(":");
                 switch (line[0]) {
@@ -115,8 +125,19 @@ function extendDiagramByLoading(diagram) {
                             tmp.joints[j] = parseInt(innerLine[j]);
                         }
                         innerLine = line[7].split("|");
-                        for (var j = 0; j < innerLine.length; j++) {
-                            tmp.netElement.netParametersValues[j] = innerLine[j].replace(/(?:_)/g, ' ');
+                        if (innerLine[0] !== "") {
+                            tmp.netElement.uniqueName = innerLine[0];
+                            uniqueNames.push(innerLine[0]);
+                        }
+                        border = tmp.netElement.netParametersValues.length;
+                        for (var j = 0; j < innerLine.length - 1; j++) {
+                            if (j < border) {
+                                tmp.netElement.netParametersValues[j] = innerLine[j + 1].replace(/(?:_)/g, ' ');
+                            } else if (j > border) {
+                                tmp.netElement.netParametersVisibility[j - border - 1] = innerLine[j + 1] === "1";
+                            } else {
+                                tmp.netElement.showName = innerLine[j + 1] === "1";
+                            }
                         }
                         tmp.netElement.refreshListText();
                         elements.push(tmp);
@@ -130,8 +151,19 @@ function extendDiagramByLoading(diagram) {
                         tmp.id = parseInt(line[1]);
                         tmp.placed = true;
                         innerLine = line[5].split("|");
-                        for (var j = 0; j < innerLine.length; j++) {
-                            tmp.netElement.netParametersValues[j] = innerLine[j].replace(/(?:_)/g, ' ');
+                        if (innerLine[0] !== "") {
+                            tmp.netElement.uniqueName = innerLine[0];
+                            uniqueNames.push(innerLine[0]);
+                        }
+                        border = tmp.netElement.netParametersValues.length;
+                        for (var j = 0; j < innerLine.length - 1; j++) {
+                            if (j < border) {
+                                tmp.netElement.netParametersValues[j] = innerLine[j + 1].replace(/(?:_)/g, ' ');
+                            } else if (j > border) {
+                                tmp.netElement.netParametersVisibility[j - border - 1] = innerLine[j + 1] === "1";
+                            } else {
+                                tmp.netElement.showName = innerLine[j + 1] === "1";
+                            }
                         }
                         tmp.netElement.refreshListText();
                         simulations.push(tmp);
@@ -147,6 +179,13 @@ function extendDiagramByLoading(diagram) {
                             tmp.joints[j] = innerLine[j] !== "-" ? parseInt(innerLine[j]) : null;
                         }
                         joints.push(tmp);
+                        break;
+                    case "n":
+                        tmp = new NetJoint(parseInt(line[1]) * scale, parseInt(line[2]) * scale, null);
+                        tmp.uniqueName = line[3];
+                        tmp.setUniqueName(line[3]);
+                        tmp.joint = line[4] !== "-" ? parseInt(line[4]) : null;
+                        netJoints.push(tmp);
                         break;
                     case "":
                         break;
@@ -192,6 +231,18 @@ function extendDiagramByLoading(diagram) {
                     }
                 }
             }
+            for (var i = 0; i < netJoints.length; i++) {
+                tmp = netJoints[i];
+                if (tmp.joint !== null) {
+                    for (var j = 0; j < joints.length; j++) {
+                        if (tmp.joint === joints[j].id) {
+                            joints[j].addNetJoint(tmp);
+                            tmp.joint = joints[j];
+                            break;
+                        }
+                    }
+                }
+            }
             //TESTING
             for (var i = 0; i < elements.length; i++) {
                 tmp = elements[i];
@@ -214,11 +265,19 @@ function extendDiagramByLoading(diagram) {
                     }
                 }
             }
+            for (var i = 0; i < netJoints.length; i++) {
+                tmp = netJoints[i];
+                if (tmp.joint !== null && !(tmp.joint instanceof Joint)) {
+                    throw "Unknown element attached to Joint Name (" + tmp.x + ", " + tmp.y + ") : id." + tmp.joint;
+                }
+            }
             //APPLY TO THE DIAGRAM
             this.elements = [];
-            this.GUI = [this.GUI[0], this.GUI[1]];
+            this.GUI = [this.GUI[0], this.GUI[1], this.GUI[2]];
             this.simulation = [];
             this.joints = [];
+            this.netJoints = [];
+            nameTable = uniqueNames;
             this.jointId = tmpJointId;
             this.elementId = tmpElementId;
             this.cropper.x = cropX;
@@ -232,6 +291,10 @@ function extendDiagramByLoading(diagram) {
             for (var i = 0; i < joints.length; i++) {
                 this.joints.push(joints[i]);
             }
+            for (var i = 0; i < netJoints.length; i++) {
+                this.netJoints.push(netJoints[i]);
+                this.addElement(netJoints[i].listGUI);
+            }
             for (var i = 0; i < simulations.length; i++) {
                 this.simulation.push(simulations[i]);
                 simulations[i].netElement.addList();
@@ -243,8 +306,21 @@ function extendDiagramByLoading(diagram) {
         }
     };
 
+    diagram.test = function () {
+        for (var i = 0; i < this.joints.length; i++) {
+            this.joints[i].clearSpreadData();
+        }
+        for (var i = 0; i < this.netJoints.length; i++) {
+            this.netJoints[i].setUpNetNodes();
+        }
+    };
+
     diagram.getDiagramNetlist = function () {
+        var grounds = [];
         for (var i = 0; i < this.elements.length; i++) {
+            if (this.elements[i].isGround) {
+                grounds.push(this.elements[i]);
+            }
             this.elements[i].getNetElement().clearData();
         }
         for (var i = 0; i < this.joints.length; i++) {
@@ -252,15 +328,32 @@ function extendDiagramByLoading(diagram) {
         }
         clearNetNodesIds();
         for (var i = 0; i < this.elements.length; i++) {
-            this.elements[i].setUpNetNodes();
+            if (!this.elements[i].isGround) {
+                this.elements[i].setUpNetNodes();
+            }
+        }
+        if (grounds.length > 0 || this.netJoints.length > 0) {
+            for (var i = 0; i < this.joints.length; i++) {
+                this.joints[i].clearSpreadData();
+            }
+            for (var i = 0; i < grounds.length; i++) {
+                grounds[i].setUpNetNodes();
+            }
+            for (var i = 0; i < this.netJoints.length; i++) {
+                this.netJoints[i].setUpNetNodes();
+            }
         }
         var text = "";
         for (var i = 0; i < this.elements.length; i++) {
-            text += this.elements[i].getNetElement().getNetElementString() + "\n";
+            if (!this.elements[i].isGround) {
+                text += this.elements[i].getNetElement().getNetElementString() + "\n";
+            }
         }
+        var ret = {simulations: []};
         for (var i = 0; i < this.simulation.length; i++) {
-            text += this.simulation[i].getNetElement().getNetElementString() + "\n";
+            ret[this.simulation[i].id] = text + this.simulation[i].getNetElement().getNetElementString() + "\n";
+            ret["simulations"].push(this.simulation[i]);
         }
-        return text;
+        return ret;
     };
 }

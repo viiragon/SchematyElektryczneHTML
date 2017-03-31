@@ -14,6 +14,7 @@ function DCSimulation(x, y, name) {
     net.netParametersIDs = ["Temp"];
     net.netParametersValues = ["26.85"];
     net.netParametersNames = ["Temperature"];
+    net.netParametersVisibility = [false];
     net.setUpList();
     
     return sim;
@@ -28,6 +29,7 @@ function ACSimulation(x, y, name) {
     net.netParametersValues = ["1 Hz", "10 MHz", "100", "log"];
     net.netParametersNames = ["Starting frequency", "Ending frequency", "Num. of simulation steps", "Sweep type"];
     net.netParametersLists = [3, ["log", "lin", "list", "const"]];
+    net.netParametersVisibility = [true, true, true, true];
     net.setUpList();
     
     return sim;
@@ -107,6 +109,8 @@ function Simulation(x, y, name) {
             ctx.drawImage(this.image, -this.width / 2, -this.width / 2, this.width, this.width);
             ctx.restore();
         }
+        this.netElement.drawName(this.x - this.width / 2, this.y - 0.5 * this.width, c, ctx);
+        this.netElement.drawParametersList(this.x - this.width / 2, this.y + 0.7 * this.width, c, ctx);
     };
 
     this.saveMe = function () {

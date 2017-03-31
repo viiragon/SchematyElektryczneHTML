@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* global Element, DEBUG, Joint, ENABLE_CROPPING, placingId, Cropper, Deleter, Diode, elementNamesList, LineElement, SpstToggle, EarthGround, ChassisGround, PotentiometrIEEE, PotentiometrIEC, Amplifier, Transformer, PMOS, NMOS, JFETP, JFETN, PNP, NPN, NonRotableLineElement, Resistor, Capacitor, Inductor, DCVoltageSource, diagram, GuiElement, Simulation, ACSimulation, DCSimulation */
+/* global Element, DEBUG, Joint, ENABLE_CROPPING, placingId, Cropper, Deleter, Diode, elementNamesList, LineElement, SpstToggle, EarthGround, ChassisGround, PotentiometrIEEE, PotentiometrIEC, Amplifier, Transformer, PMOS, NMOS, JFETP, JFETN, PNP, NPN, NonRotableLineElement, Resistor, Capacitor, Inductor, DCVoltageSource, diagram, GuiElement, Simulation, ACSimulation, DCSimulation, ACVoltageSource, NetJoint */
 
 var JOINT_ELEMENT = 0, NORMAL_ELEMENT = 1, CROP_ELEMENT = 2;
 
@@ -28,10 +28,32 @@ function distance(sx, sy, ex, ey) {
     return Math.max(Math.abs(sx - ex), Math.abs(sy - ey));
 }
 
+var nameTable = [];
+function existsInNameTable(name) {
+    for (var i = 0; i < nameTable.length; i++) {
+        if (nameTable[i] === name) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function addToNameTable(name) {
+    nameTable.push(name);
+}
+
+function removeFromNameTable(name) {
+    for (var i = 0; i < nameTable.length; i++) {
+        if (nameTable[i] === name) {
+            nameTable.splice(i, 1);
+        }
+    }
+}
+
 function Diagram(width, height) {
     this.windowWidth = width;
     this.windowHeight = height;
-    scale = Math.floor(Math.min(width, height) / 120);
+    scale = Math.floor(Math.min(width, height) / 120) * 1.1;
     halfScale = scale / 2;
     snapDistance = scale * 2;
     lineWidth = scale / 4;
@@ -48,18 +70,24 @@ function Diagram(width, height) {
     this.joints = [];
     this.elements = [];
     this.simulation = [];
+    this.netJoints = [];
+
+    this.nameToJoint = {};
+
+    this.simulationGUI = new SimulationGUI(this.windowWidth, this.windowHeight);
+
     this.GUI = [new ToolsAppearer(this.windowWidth, this.windowHeight),
-        new FileAppearer(this.windowHeight)/*,
-         new ChangableText(100, 100, 80, "20 Ohm"),
-         new ChangableText(100, 150, 80, "10 Ohm")*/];
+        new FileAppearer(this.windowHeight),
+        this.simulationGUI
+    ];
 
     this.placer = new LinePlacer();
     this.cropper = new Cropper();
     this.deleter = new Deleter();
-    
+
     extendDiagramByDrawing(this);
     extendDiagramByLoading(this);
-    
+
     this.changeScale = function (change) {
         scale = orgScale * change;
         halfScale = scale / 2;
@@ -120,10 +148,18 @@ function Diagram(width, height) {
             y -= this.yoffset;
         }
         var deleted = false;
-        for (var i = 0; i < this.joints.length; i++) {
-            if (this.joints[i].deleteMe(x, y)) {
+        for (var i = 0; i < this.netJoints.length; i++) {
+            if (this.netJoints[i].deleteMe(x, y)) {
                 deleted = true;
                 break;
+            }
+        }
+        if (!deleted) {
+            for (var i = 0; i < this.joints.length; i++) {
+                if (this.joints[i].deleteMe(x, y)) {
+                    deleted = true;
+                    break;
+                }
             }
         }
         if (!deleted) {
@@ -135,13 +171,24 @@ function Diagram(width, height) {
             }
         }
         if (!deleted) {
+            for (var i = 0; i < this.simulation.length; i++) {
+                if (this.simulation[i].deleteMe(x, y)) {
+                    deleted = true;
+                    break;
+                }
+            }
+        }
+        if (!deleted) {
             this.edited = this.deleter;
             this.deleter.startEdit(x, y);
+        }
+        for (var i = 0; i < this.joints.length; i++) {
+            this.joints[i].refreshNetJoint();
         }
     };
 
     this.checkGUIInPlace = function (x, y) {
-        for (var i = 0; i < this.GUI.length; i++) {
+        for (var i = this.GUI.length - 1; i >= 0; i--) {
             if (this.GUI[i].onClick(x, y)) {
                 return true;
             }
@@ -155,6 +202,40 @@ function Diagram(width, height) {
             y -= this.yoffset;
         }
         var checked = false;
+        var toDelete = [];
+        for (var i = 0; i < this.netJoints.length; i++) {
+            if (!checked && this.netJoints[i].isClose(x, y)) {
+                if (!this.netJoints[i].isListOpen()) {
+                    this.netJoints[i].showList(x, y);
+                    checked = true;
+                }
+            } else {
+                this.netJoints[i].hideList();
+                if (this.netJoints[i].uniqueName === "") {
+                    toDelete.push(this.netJoints[i]);
+                }
+            }
+        }
+        for (var i = 0; i < toDelete.length; i++) {
+            this.deleteElement(toDelete[i]);
+        }
+        var point;
+        if (!checked) {
+            for (var i = 0; i < this.joints.length; i++) {
+                point = this.joints[i].getClosestPoint(x, y);
+                if (point !== null) {
+                    var net = new NetJoint(point.x, point.y, this.joints[i]);
+                    this.joints[i].addNetJoint(net);
+                    if (this.joints[i].netJoint !== null) {
+                        this.addElement(net);
+                        this.addElement(net.listGUI);
+                        checked = true;
+                        net.showList(x, y);
+                        break;
+                    }
+                }
+            }
+        }
         for (var i = 0; i < this.elements.length; i++) {
             if (!checked && this.elements[i].isClose(x, y)) {
                 if (!this.elements[i].netElement.isListOpen()) {
@@ -198,6 +279,103 @@ function Diagram(width, height) {
         }
     };
 
+    this.showReport = function () {
+        var ret = "JOINTS:\n\n";
+        for (var i = 0; i < this.joints.length; i++) {
+            ret += " " + this.joints[i].saveMe() + "\n";
+        }
+        ret += "\n\nELEMENTS:\n\n";
+        for (var i = 0; i < this.elements.length; i++) {
+            ret += " " + this.elements[i].saveMe() + "\n";
+        }
+        ret += "\n\nSIMULATIONS:\n\n";
+        for (var i = 0; i < this.simulation.length; i++) {
+            ret += " " + this.simulation[i].saveMe() + "\n";
+        }
+        return ret;
+    };
+
+    this.getSimulationErrors = function () {
+        var ret = [];
+        if (this.elements.length === 0 || this.joints.length === 0) {
+            ret.push("There are no elements");
+        }
+        if (this.simulation.length === 0) {
+            ret.push("There are no simulation elements");
+        }
+        for (var i = 0; i < this.elements.length; i++) {
+            if (!this.elements[i].isGround && this.elements[i].netElement.netName === "ERROR") {
+                ret.push("Element '" + this.elements[i].name + "' cannot be simulated");
+            }
+        }
+        return ret;
+    };
+
+    this.loadSimulation = function (data) {
+        if ("simulations" in data) {
+            var sim;
+            var show = false;
+            for (var i = 0; i < data["simulations"].length; i++) {
+                sim = data["simulations"][i];
+                switch (sim.netElement.netName) {
+                    case ".AC":
+                        this.simulationGUI.setData(data, sim);
+                        show = true;
+                        break;
+                    case ".DC":
+                        var depKeys = [];
+                        var refKeys = data[sim.id]["variables"];
+                        for (var k in refKeys) {
+                            depKeys.push(k);
+                        }
+                        var name, unit;
+                        for (var i = 0; i < depKeys.length; i++) {
+                            name = depKeys[i].slice(0, -2);
+                            unit = depKeys[i].slice(-1);
+                            switch (unit) {
+                                case "I":
+                                    unit = "A";
+                                    break;
+                                case "V":
+                                    unit = "V";
+                                    break;
+                                default:
+                                    unit = "";
+                                    break;
+                            }
+                            for (var j = 0; j < this.joints.length; j++) {
+                                if (this.joints[j].nodeId === name) {
+                                    this.joints[j].simulationValue = Math.abs(data[sim.id][depKeys[i]][0].toFixed(2)) + " " + unit;
+                                }
+                            }
+                        }
+                        DC_SIMULATION = true;
+                        break;
+                }
+            }
+            if (show) {
+                this.simulationGUI.visible = true;
+                this.simulationGUI.alwaysVisible = true;
+            }
+        } else if ("variables" in data) {
+            this.simulationGUI.setDataSingle(data);
+            this.simulationGUI.visible = true;
+            this.simulationGUI.alwaysVisible = true;
+        } else {
+            throw new Error("To nie jest Datalist");
+        }
+    };
+
+    this.unloadSimulation = function () {
+        this.simulationGUI.visible = false;
+        this.simulationGUI.alwaysVisible = false;
+        this.simulationGUI.closeMe();
+    };
+
+    this.getSimulationData = function () {
+        return this.simulationGUI.getData();
+    };
+
     this.addElement = function (element) {
         if (element instanceof Joint) {
             this.joints.push(element);
@@ -206,8 +384,25 @@ function Diagram(width, height) {
             this.GUI.push(element);
         } else if (element instanceof Simulation) {
             this.simulation.push(element);
+            var newIndex = false;
+            while (!newIndex) {
+                newIndex = true;
+                for (var i = 0; i < this.simulation.length; i++) {
+                    if (this.simulation[i].id === this.simulationId) {
+                        this.simulationId++;
+                        newIndex = false;
+                        break;
+                    } else if (this.simulation[i].id > this.simulationId) {
+                        this.simulationId = this.simulation[i].id + 1;
+                        newIndex = false;
+                        break;
+                    }
+                }
+            }
             element.id = this.simulationId++;
             element.netElement.addList();
+        } else if (element instanceof NetJoint) {
+            this.netJoints.push(element);
         } else {
             this.elements.push(element);
             element.netElement.addList();
@@ -215,16 +410,16 @@ function Diagram(width, height) {
             for (var i = 0; i < element.joints.length; i++) {
                 this.addElement(element.joints[i]);
             }
-            if (DEBUG) {
-                var joint;
-                for (var i = 0; i < element.joints.length; i++) {
-                    joint = element.joints[i];
-                    console.log(i + "." + joint);
-                    for (var j = 0; j < 4; j++) {
-                        console.log(" " + j + ". " + (joint.joints[j] === null));
-                    }
-                }
-            }
+            /*if (DEBUG) {
+             var joint;
+             for (var i = 0; i < element.joints.length; i++) {
+             joint = element.joints[i];
+             console.log(i + "." + joint);
+             for (var j = 0; j < 4; j++) {
+             console.log(" " + j + ". " + (joint.joints[j] === null));
+             }
+             }
+             }*/
         }
     };
 
@@ -244,6 +439,7 @@ function Diagram(width, height) {
             } else if (element instanceof Element) {
                 for (var i = 0; i < this.elements.length; i++) {
                     if (this.elements[i] === element) {
+                        removeFromNameTable(element.netElement.uniqueName);
                         this.elements.splice(i, 1);
                         var j;
                         for (j = 0; j < this.elements.length; j++)
@@ -255,6 +451,7 @@ function Diagram(width, height) {
             } else if (element instanceof Simulation) {
                 for (var i = 0; i < this.simulation.length; i++) {
                     if (this.simulation[i] === element) {
+                        removeFromNameTable(element.netElement.uniqueName);
                         this.simulation.splice(i, 1);
                         break;
                     }
@@ -265,6 +462,14 @@ function Diagram(width, height) {
             for (var i = 0; i < this.GUI.length; i++) {
                 if (this.GUI[i] === element) {
                     this.GUI.splice(i, 1);
+                    break;
+                }
+            }
+        } else if (element instanceof NetJoint) {
+            for (var i = 0; i < this.netJoints.length; i++) {
+                if (this.netJoints[i] === element) {
+                    removeFromNameTable(element.uniqueName);
+                    this.netJoints.splice(i, 1);
                     break;
                 }
             }
@@ -322,16 +527,22 @@ function Diagram(width, height) {
             var previous = joint;
             if (previous.id !== null) {
                 for (var i = 0; i < this.edited.joints.length; i++) {
-                    joint = this.edited.joints[i];
-                    if (joint !== null && (joint.x !== previous.x || joint.y !== previous.y)) {
-                        joint = this.findExactJoint(joint.x, joint.y, false, joint);
-                        if (joint.id !== null) {
-                            additional.push(i);
-                            additional.push(joint);
+                    if (i !== dir) {
+                        joint = this.edited.joints[i];
+                        if (joint !== null && (joint.x !== previous.x || joint.y !== previous.y)) {
+                            joint = this.findExactJoint(joint.x, joint.y, false, joint);
+                            if (joint.id !== null) {
+                                additional.push(i);
+                                additional.push(joint);
+                                //console.log(i + " " + joint.id + " " + joint.x + " " + joint.y);
+                            }
                         }
                     }
                 }
+                //this.edited.deleteMe(this.edited.x, this.edited.y);
+                //this.edited.setPos(this.edited.x, this.edited.y - 40);
                 this.edited.place(dir, previous);
+                //console.log(" " + dir + " " + previous.id + " " + previous.x + " " + previous.y);
                 for (var i = 0; i < additional.length; i += 2) {
                     this.edited.place(additional[i], additional[i + 1]);
                 }
@@ -383,7 +594,10 @@ function Diagram(width, height) {
         this.joints = [];
         this.elements = [];
         this.simulation = [];
-        this.GUI = [this.GUI[0], this.GUI[1]];
+        this.simulationId = 0;
+        this.netJoints = [];
+        nameTable = [];
+        this.GUI = [this.GUI[0], this.GUI[1], this.GUI[2]];
         this.cropper.startEdit(null, null);
     };
 
@@ -429,7 +643,7 @@ function Diagram(width, height) {
         "ammeter", NonRotableLineElement,
         "ohmmeter", NonRotableLineElement,
         "wattmeter", NonRotableLineElement,
-        "ACVolSource", NonRotableLineElement,
+        "ACVolSource", ACVoltageSource,
         "motor", NonRotableLineElement,
         "spstToggle", SpstToggle,
         "earthGround", EarthGround,

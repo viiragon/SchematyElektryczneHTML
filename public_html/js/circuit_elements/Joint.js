@@ -4,9 +4,10 @@
  * and open the template in the editor.
  */
 
-/* global diagram, DEBUG, snapDistance, mode, MODE_DELETE, scale, lineWidth, halfScale, dl, dc, Element */
+/* global diagram, DEBUG, snapDistance, mode, MODE_DELETE, scale, lineWidth, halfScale, dl, dc, Element, defaultFont */
 
-var CON_UP = 1, CON_DOWN = 3, CON_LEFT = 0, CON_RIGHT = 2;
+var CON_UP = 1, CON_DOWN = 3, CON_LEFT = 0, CON_RIGHT = 2, CON_NULL = -1;
+var DC_SIMULATION = false;
 
 function Joint(x, y) {
     this.joints = [null, null, null, null];
@@ -15,8 +16,11 @@ function Joint(x, y) {
     this.y = y;
     this.id = -2;
     this.hasElement = false;
+    this.netJoint = null;
 
     this.wasSpreading = false;
+    this.nodeId = "";
+    this.simulationValue = "AAA";
 
     this.clearSpreadData = function () {
         this.wasSpreading = false;
@@ -24,6 +28,7 @@ function Joint(x, y) {
 
     this.spreadNodeId = function (nodeId) {
         if (!this.wasSpreading) {
+            this.nodeId = getIdString("n", nodeId);
             this.wasSpreading = true;
             for (var i = 0; i < this.joints.length; i++) {
                 if (this.joints[i] !== null) {
@@ -33,7 +38,27 @@ function Joint(x, y) {
                         var element = this.joints[i];
                         var index = element.getJointIndex(this.id);
                         if (index >= 0) {
-                            element.getNetElement().netNodes[index] = nodeId;
+                            element.getNetElement().netNodes[index] = this;
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+    this.spreadNodeName = function (nodeName) {
+        if (!this.wasSpreading) {
+            this.nodeId = nodeName;
+            this.wasSpreading = true;
+            for (var i = 0; i < this.joints.length; i++) {
+                if (this.joints[i] !== null) {
+                    if (this.joints[i] instanceof Joint) {
+                        this.joints[i].spreadNodeName(nodeName);
+                    } else {
+                        var element = this.joints[i];
+                        var index = element.getJointIndex(this.id);
+                        if (index >= 0) {
+                            element.getNetElement().netNodes[index] = this;
                         }
                     }
                 }
@@ -144,15 +169,74 @@ function Joint(x, y) {
                     && this.joints[CON_LEFT] !== null && this.joints[CON_RIGHT] !== null
                     && this.joints[CON_LEFT] instanceof Joint && this.joints[CON_RIGHT] instanceof Joint) {
                 this.joints[CON_LEFT].connect(this.joints[CON_RIGHT]);
+                if (this.netJoint !== null) {
+                    this.joints[CON_LEFT].addNetJoint(this.netJoint);
+                    this.netJoint = null;
+                }
                 this.detach();
                 diagram.deleteElement(this);
             } else if (this.joints[CON_LEFT] === null && this.joints[CON_RIGHT] === null
                     && this.joints[CON_DOWN] !== null && this.joints[CON_UP] !== null
                     && this.joints[CON_DOWN] instanceof Joint && this.joints[CON_UP] instanceof Joint) {
                 this.joints[CON_DOWN].connect(this.joints[CON_UP]);
+                if (this.netJoint !== null) {
+                    this.joints[CON_DOWN].addNetJoint(this.netJoint);
+                    this.netJoint = null;
+                }
                 this.detach();
                 diagram.deleteElement(this);
             }
+        }
+    };
+
+    this.addNetJoint = function (netJoint) {
+        this.netJoint = netJoint;
+        if (netJoint !== null) {
+            this.netJoint.placement = this.getNetJointPlacement(netJoint);
+            if (this.netJoint.placement === CON_NULL) {
+                this.centralizeNetJoint();
+            }
+        }
+    };
+
+    this.getNetJointPlacement = function (netJoint) {
+        if (netJoint.x === this.x) {
+            if (netJoint.y === this.y) {
+                return CON_NULL;
+            } else {
+                if (netJoint.y < this.y && !this.isFreeInDirection(CON_UP)
+                        && netJoint.y > this.joints[CON_UP].y) {
+                    return CON_UP;
+                } else if (netJoint.y > this.y && !this.isFreeInDirection(CON_DOWN)
+                        && netJoint.y < this.joints[CON_DOWN].y) {
+                    return CON_DOWN;
+                } else {
+                    return CON_NULL;
+                }
+            }
+        } else if (netJoint.y === this.y) {
+            if (netJoint.x < this.x && !this.isFreeInDirection(CON_LEFT)
+                    && netJoint.x > this.joints[CON_LEFT].x) {
+                return CON_LEFT;
+            } else if (netJoint.x > this.x && !this.isFreeInDirection(CON_RIGHT)
+                    && netJoint.x < this.joints[CON_RIGHT].x) {
+                return CON_RIGHT;
+            } else {
+                return CON_NULL;
+            }
+        } else {
+            return CON_NULL;
+        }
+    };
+
+    this.centralizeNetJoint = function () {
+        this.netJoint.placement = CON_NULL;
+        this.netJoint.setPos(this.x, this.y);
+    };
+
+    this.refreshNetJoint = function () {
+        if (this.netJoint !== null) {
+            this.addNetJoint(this.netJoint);
         }
     };
 
@@ -208,6 +292,29 @@ function Joint(x, y) {
                         this.connect(joint);
                         return joint;
                     }
+                }
+            }
+        }
+        return null;
+    };
+
+    this.getClosestPoint = function (x, y) {
+        if (this.isClose(x, y)) {
+            return {x: this.x, y: this.y};
+        }
+        for (var i = 0; i < this.joints.length; i++) {
+            if (this.joints[i] !== null && this.responsible[i]) {
+                if (this.isCloseToLine(x, y, i)) {
+                    var ax, ay;
+                    if (this.isHorizontal(i)) {
+                        ax = x;
+                        ay = this.y;
+                    }
+                    else {
+                        ax = this.x;
+                        ay = y;
+                    }
+                    return {x: ax, y: ay};
                 }
             }
         }
@@ -286,6 +393,24 @@ function Joint(x, y) {
             ctx.textAlign = "center";
             ctx.fillText(this.id, this.x + snapDistance / 2, this.y + snapDistance);
         }
+        if (DC_SIMULATION) {
+            var sx = this.x, sy = this.y;
+            for (var i = 0; i < this.joints.length; i++) {
+                if (this.joints[i] !== null && this.responsible[i]) {
+                    sx = (this.x + this.joints[i].x) / 2;
+                    sy = (this.y + this.joints[i].y) / 2;
+                    ctx.fillStyle = 'red';
+                    ctx.font = "15px " + defaultFont;
+                    if (this.isHorizontal(i)) {
+                        ctx.textAlign = "center";
+                        ctx.fillText(this.simulationValue, sx, sy - scale);
+                    } else {
+                        ctx.textAlign = "right";
+                        ctx.fillText(this.simulationValue, sx - scale, sy);
+                    }
+                }
+            }
+        }
     };
 
     this.highlightMe = function (x, y, c, ctx) {
@@ -317,10 +442,17 @@ function Joint(x, y) {
             }
             for (var i = 0; i < this.joints.length; i++) {
                 if (this.joints[i] !== null) {
+                    if (this.netJoint !== null) {
+                        this.joints[i].addNetJoint(this.netJoint);
+                        this.netJoint = null;
+                    }
                     this.joints[i].joints[(i + 2) % 4] = null;
                     this.joints[i].responsible[(i + 2) % 4] = false;
                     this.joints[i].simplify();
                 }
+            }
+            if (this.netJoint !== null) {
+                diagram.deleteElement(this.netJoint);
             }
             diagram.deleteElement(this);
             return true;

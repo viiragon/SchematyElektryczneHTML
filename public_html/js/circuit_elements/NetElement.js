@@ -3,9 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-/* global diagram, Element */
-
-var NULL_NODE = -1;
+/* global diagram, Element, scale, defaultFont */
 
 var netNodeId = 0;
 
@@ -18,32 +16,31 @@ function getNetNodeId() {
 }
 
 function getIdString(begining, id) {
-    if (begining === "n" && id === 0) {
-        return "gnd";
-    } else {
-        var text = begining;
-        while (true) {
-            text += String.fromCharCode((id % 10) + 65);
-            if (id === 0 || id < 10) {
-                break;
-            } else {
-                id = Math.floor(id / 10);
-            }
+    var text = begining;
+    while (true) {
+        text += String.fromCharCode((id % 10) + 65);
+        if (id === 0 || id < 10) {
+            break;
+        } else {
+            id = Math.floor(id / 10);
         }
-        return text;
     }
+    return text;
 }
 
 function NetElement(netName, owner) {
     this.element = owner;
 
     this.netName = netName;
+    this.uniqueName = "";
+    this.showName = true;
     this.netNodes = [];
     this.netNodesOrder = [];
     this.netParametersIDs = [];
     this.netParametersValues = [];
     this.netParametersNames = [];
     this.netParametersLists = [];
+    this.netParametersVisibility = [];
 
     this.listGUI = null;
 
@@ -89,14 +86,14 @@ function NetElement(netName, owner) {
 
     this.setUpNodes = function (nodeCount) {
         for (var i = 0; i < nodeCount; i++) {
-            this.netNodes.push(NULL_NODE);
+            this.netNodes.push(null);
             this.netNodesOrder.push(i);
         }
     };
 
     this.clearData = function () {
         for (var i = 0; i < this.netNodes.length; i++) {
-            this.netNodes[i] = NULL_NODE;
+            this.netNodes[i] = null;
         }
     };
 
@@ -116,12 +113,11 @@ function NetElement(netName, owner) {
         } else {
             ownerText = "s";
         }
-        var text = this.netName + ":" + getIdString(ownerText, this.element.id);
+        var name = this.uniqueName === "" ? getIdString(ownerText, this.element.id) : this.uniqueName;
+        var text = this.netName + ":" + name;
         for (var i = 0; i < this.netNodesOrder.length; i++) {
-            if (this.netNodes[this.netNodesOrder[i]] !== -1) {
-                text += " " + getIdString("n", this.netNodes[this.netNodesOrder[i]]);
-            } else {
-                text += " gnd";
+            if (this.netNodes[this.netNodesOrder[i]] !== null) {
+                text += " " + this.netNodes[this.netNodesOrder[i]].nodeId;
             }
         }
         for (var i = 0; i < this.netParametersIDs.length; i++) {
@@ -136,14 +132,43 @@ function NetElement(netName, owner) {
         }
     };
 
+    this.drawName = function (x, y, c, ctx) {
+        if (this.uniqueName !== "") {
+            ctx.font = 2 * scale + "px " + defaultFont;
+            ctx.fillStyle = "gray";
+            ctx.textAlign = "left";
+            if (this.showName) {
+                ctx.fillText(this.uniqueName, x, y);
+            }
+        }
+    };
+
+    this.drawParametersList = function (x, y, c, ctx) {
+        ctx.font = 2 * scale + "px " + defaultFont;
+        ctx.fillStyle = "gray";
+        ctx.textAlign = "left";
+        var d = 0;
+        for (var i = 0; i < this.netParametersIDs.length; i++) {
+            if (this.netParametersVisibility[i]) {
+                ctx.fillText(this.netParametersIDs[i] + ": " + this.netParametersValues[i],
+                        x, y + 2.5 * scale * d);
+                d++;
+            }
+        }
+    };
+
     this.saveMe = function () {
-        var values = "";
+        var values = this.uniqueName + "|";
         var tmp;
         for (var i = 0; i < this.netParametersValues.length; i++) {
             tmp = this.netParametersValues[i];
             tmp = tmp.replace(/(?:\r\n|\r|\n| |\t)/g, '_');  //Usuwa białe znaki            
-            values += tmp;
-            if (i !== this.netParametersValues.length - 1) {
+            values += tmp + "|";
+        }
+        values += (this.showName ? "1" : "0") + "|";
+        for (var i = 0; i < this.netParametersVisibility.length; i++) {
+            values += this.netParametersVisibility[i] ? "1" : "0";
+            if (i !== this.netParametersVisibility.length - 1) {
                 values += "|";
             }
         }

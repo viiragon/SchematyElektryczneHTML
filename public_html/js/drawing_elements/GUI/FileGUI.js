@@ -18,6 +18,7 @@ function FileGUI(height) {
         new ChooseCrop(2 * scale, 0, gui.width),
         new ChooseAutoCrop(2 * scale, 0, gui.width),
         new ChooseSimulate(2 * scale, 2 * scale, gui.width),
+        new ChooseLoadChart(2 * scale, 0, gui.width),
         new ChooseHelp(2 * scale, 0, gui.width)];
 
     var delta = 2 * scale;

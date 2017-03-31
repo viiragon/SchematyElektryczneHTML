@@ -6,7 +6,7 @@
 
 /* global scale, MODE_NORMAL, snapDistance, defaultFont, TEXT_CHOICE */
 
-function ChooseLoadDiagram(x, y, width) {
+function ChooseLoadChart(x, y, width) {
     var gui = new ChoiceTemplate(x, y, width, TEXT_CHOICE);
     gui.button = document.getElementById("files");
     
@@ -16,7 +16,7 @@ function ChooseLoadDiagram(x, y, width) {
     };
 
     gui.myMouseOver = function (x, y) {
-        prepareGettingDiagramFile();
+        prepareGettingChartFile();
         gui.color = 'lightgray';
         this.button.style.display = "block";
         this.button.style.width = this.width + "px";
@@ -26,7 +26,7 @@ function ChooseLoadDiagram(x, y, width) {
     };
 
     gui.getValue = function () {
-        return "Load file";
+        return "Load simulation";
     };
 
     return gui;
