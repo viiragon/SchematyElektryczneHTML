@@ -17,6 +17,7 @@ function singleElement(name, child, action) {
 function ListGUI(list, affected) {
     var gui = new GuiElement(-4 * scale, 0, 0, 0, false);
 
+    gui.largerWidth = true;
     gui.childs = [];
     gui.nameList = [];
     gui.actions = [];
@@ -48,8 +49,16 @@ function ListGUI(list, affected) {
     gui.ix = -gui.width + 3 * scale;
 
     gui.isClose = function (x, y) {
-        return x >= this.x && x <= this.x + this.width + 3 * scale
-                && y >= this.y && y <= this.y + this.height;
+        if (this.largerWidth) {
+            if (x <= this.x + this.width - 1 * scale) {
+                this.largerWidth = false;
+            }
+            return x >= this.x && x <= this.x + this.width + 11 * scale
+                    && y >= this.y && y <= this.y + this.height;
+        } else {
+            return x >= this.x && x <= this.x + this.width
+                    && y >= this.y && y <= this.y + this.height;
+        }
     };
 
     gui.myClick = function (x, y) {

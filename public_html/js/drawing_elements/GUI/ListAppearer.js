@@ -7,35 +7,13 @@
 /* global scale */
 
 function ListAppearer(parent) {
-    var gui = new GuiElement(-6 * scale, 2 * scale, 5 * scale, 6 * scale, true);
+    var gui = new GuiElement(-4 * scale, 2 * scale, 5 * scale, 6 * scale, true);
 
     gui.childs = [listCreator(parent)];
-    gui.color = 'white';
 
-    gui.myClick = function (x, y) {
+    gui.showList = function () {
         this.childs[0].visible = true;
-    };
-
-    gui.myMouseOver = function (x, y) {
-        gui.color = 'lightgray';
-        //this.childs[0].visible = true;
-    };
-
-    gui.myMouseLeave = function (x, y) {
-        gui.color = 'white';
-    };
-
-    gui.drawOnlyMe = function (c, ctx) {
-        ctx.beginPath();
-        ctx.moveTo(this.x, this.y + this.height / 2);
-        ctx.lineTo(this.x + this.width, this.y + this.height);
-        ctx.lineTo(this.x + this.width, this.y);
-        ctx.closePath();
-        ctx.fillStyle = this.color;
-        ctx.fill();
-        ctx.lineWidth = scale / 3;
-        ctx.strokeStyle = 'black';
-        ctx.stroke();
+        this.childs[0].largerWidth = true;
     };
 
     return gui;

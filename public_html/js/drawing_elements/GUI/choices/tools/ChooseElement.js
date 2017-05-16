@@ -20,6 +20,10 @@ function ChooseElement(x, y) {
         placingElement = this;
     };
 
+    gui.myRightClick = function (x, y) {
+        this.childs[0].showList();
+    };
+
     gui.setElement = function (name) {
         this.element = name;
         this.image = getImage(name);

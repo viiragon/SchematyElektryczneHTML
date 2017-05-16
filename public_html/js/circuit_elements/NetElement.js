@@ -99,7 +99,7 @@ function NetElement(netName, owner) {
 
     this.rotate = function () {
         var tmp;
-        for (var i = 0; i < this.netNodesOrder.length; i++) {
+        for (var i = 0; i < this.netNodesOrder.length - 1; i++) {
             tmp = this.netNodesOrder[i];
             this.netNodesOrder[i] = this.netNodesOrder[i + 1];
             this.netNodesOrder[i + 1] = tmp;

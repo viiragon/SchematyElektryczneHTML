@@ -53,6 +53,7 @@ function extendDiagramByLoading(diagram) {
         var ret = "[Diagram]" + sep;
         ret += this.jointId + ":" + this.elementId + sep;
         ret += this.cropper.saveMe() + sep;
+        ret += Math.floor(this.xoffset / scale) + ":" + Math.floor(this.yoffset / scale) + sep;
         for (var i = 0; i < this.elements.length; i++) {
             ret += this.elements[i].saveMe() + sep;
         }
@@ -85,6 +86,7 @@ function extendDiagramByLoading(diagram) {
         var uniqueNames = [];
 
         var tmpJointId, tmpElementId;
+        var tmpXOffset, tmpYOffset;
         var cropX, cropY, cropEx, cropEy;
         txt = txt.replace(/(?:\r\n|\r|\n| |\t)/g, '');  //Usuwa białe znaki
         var data = txt.split(",");
@@ -107,8 +109,11 @@ function extendDiagramByLoading(diagram) {
             } else {
                 cropX = cropY = cropEx = cropEy = null;
             }
+            line = data[3].split(":");
+            tmpXOffset = parseInt(line[0]) * scale;
+            tmpYOffset = parseInt(line[1]) * scale;
             var tmp, innerLine, border;
-            for (var i = 3; i < data.length; i++) {
+            for (var i = 4; i < data.length; i++) {
                 line = data[i].split(":");
                 switch (line[0]) {
                     case "e":
@@ -284,6 +289,8 @@ function extendDiagramByLoading(diagram) {
             this.cropper.y = cropY;
             this.cropper.ex = cropEx;
             this.cropper.ey = cropEy;
+            this.xoffset = tmpXOffset;
+            this.yoffset = tmpYOffset;
             for (var i = 0; i < elements.length; i++) {
                 this.elements.push(elements[i]);
                 elements[i].netElement.addList();

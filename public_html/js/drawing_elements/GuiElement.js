@@ -99,16 +99,28 @@ function GuiElement(x, y, width, height, visible) {
     };
 
     this.onClick = function (x, y) {
+        return this.onClickGeneric(x, y, true);
+    };
+
+    this.onRightClick = function (x, y) {
+        return this.onClickGeneric(x, y, false);
+    };
+
+    this.onClickGeneric = function (x, y, left) {
         if (this.visible) {
             if (this.hasChildren) {
                 for (var i = 0; i < this.childs.length; i++) {
-                    if (this.childs[i] !== null && this.childs[i].onClick(x, y)) {
+                    if (this.childs[i] !== null && this.childs[i].onClickGeneric(x, y, left)) {
                         return true;
                     }
                 }
             }
             if (this.isClose(x, y)) {
-                this.myClick(x, y);
+                if (left) {
+                    this.myClick(x, y);
+                } else {
+                    this.myRightClick(x, y);
+                }
                 return true;
             }
         }
@@ -122,6 +134,9 @@ function GuiElement(x, y, width, height, visible) {
     };
 
     this.myClick = function (x, y) {
+    };
+
+    this.myRightClick = function (x, y) {
     };
 
     this.drawOnlyMe = function (c, ctx) {

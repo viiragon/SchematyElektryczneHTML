@@ -16,6 +16,7 @@ function NetJoint(x, y, owner) {
     this.y = y;
 
     this.uniqueName = "";
+    this.showName = true;
 
     this.listGUI = new VariablesList("Node", [], [], [], this);
 
@@ -37,9 +38,9 @@ function NetJoint(x, y, owner) {
         return false;
     };
 
-    this.showList = function (x, y) {
+    this.showList = function (ix, iy) {
         if (this.listGUI !== null) {
-            this.listGUI.setPos(x, y);
+            this.listGUI.setPos(ix, iy);
             this.listGUI.visible = true;
         }
     };
@@ -101,6 +102,7 @@ function NetJoint(x, y, owner) {
 
     this.deleteMe = function (x, y) {
         if (this.isClose(x, y)) {
+            this.deleteList();
             diagram.deleteElement(this);
             return true;
         }
@@ -116,15 +118,17 @@ function NetJoint(x, y, owner) {
         ctx.strokeStyle = 'green';
         ctx.stroke();
 
-        ctx.font = 2 * scale + "px " + defaultFont;
-        ctx.fillStyle = "gray";
-        ctx.textAlign = "left";
-        var text = this.uniqueName !== "" ? this.uniqueName : "--";
-        if (this.placement === CON_NULL || this.placement % 2 !== 0) {
-            ctx.fillText(text, this.x + scale, this.y + halfScale);
-        } else {
-            ctx.fillText(text, this.x - dc.measureText(text).width / 2,
-                    this.y - 2 * scale);
+        if (this.showName) {
+            ctx.font = 2 * scale + "px " + defaultFont;
+            ctx.fillStyle = "gray";
+            ctx.textAlign = "left";
+            var text = this.uniqueName !== "" ? this.uniqueName : "--";
+            if (this.placement === CON_NULL || this.placement % 2 !== 0) {
+                ctx.fillText(text, this.x + scale, this.y + halfScale);
+            } else {
+                ctx.fillText(text, this.x - dc.measureText(text).width / 2,
+                        this.y - 2 * scale);
+            }
         }
     };
 

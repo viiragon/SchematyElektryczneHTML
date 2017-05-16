@@ -64,7 +64,6 @@ function ChangableList(x, y, minimalWidth, list, text) {
                 }
             };
             this.input.onselect = function (evt) {
-                console.log("JUP");
                 evt.preventDefault();
                 this.owner.onTextLostFocus();
             };

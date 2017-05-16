@@ -240,6 +240,15 @@ function keyboardPressed(key) {
     }
 }
 
+var debugNumber = 0;
+
+function debugNum(level) {
+    if (level === 0) {
+        debugNumber = 0;
+    }
+    console.log(level + ". " + debugNumber++);
+}
+
 function keyboardReleased(key) {
     /*if (DEBUG) {
         console.log("up: " + key);
@@ -299,7 +308,7 @@ function leftMouseClicked() {
 function rightMouseClicked() {
     //console.log(diagram.getDiagramNetlist());
     if (!leftClick) {
-        if (!diagram.checkVariableListsInPlace(mx, my)) {
+        if (!diagram.checkMenuOption(mx, my)) {
             diagramMoving = true;
             tmpMx = diagram.xoffset - mx;
             tmpMy = diagram.yoffset - my;

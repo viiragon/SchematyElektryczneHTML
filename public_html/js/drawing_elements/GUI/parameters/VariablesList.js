@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* global scale, halfScale, defaultFont, dc, ChangableText, ChangableList */
+/* global scale, halfScale, defaultFont, dc, ChangableText, ChangableList, diagram */
 
 function getListFromId(list, index) {
     for (var i = 0; i < list.length; i += 2) {
@@ -140,6 +140,14 @@ function VariablesList(name, names, values, lists, netElement) {
         this.height = maxHeight;
     };
     gui.refreshWidth();
+
+    gui.setPos = function (x, y) {
+        x = Math.min(diagram.windowWidth - 14 * scale - this.width, x);
+        y = Math.min(diagram.windowHeight - this.height, y);
+        this.x = this.ix = x;
+        this.y = this.iy = y;
+        this.setUpChildren();
+    };
 
     gui.drawOnlyMe = function (c, ctx) {
         ctx.beginPath();

@@ -135,12 +135,8 @@ function Element(x, y, name) {
 
     this.changePlaceTo = function (i, endJoint) {
         var joint = this.joints[i];
-        //console.log("DATA: " + joint.x + " " + joint.y + " -> " + endJoint.x + " " + endJoint.y);
-        //console.log("FROM: " + this.x + " " + this.y);
         this.setPos(this.x + endJoint.x - joint.x,
                 this.y + endJoint.y - joint.y);
-        //console.log("TO: " + this.x + " " + this.y);
-        //console.log("DATA: " + joint.x + " " + joint.y + " -> " + endJoint.x + " " + endJoint.y);
     };
 
     this.place = function (i, endJoint) {
@@ -236,8 +232,17 @@ function Element(x, y, name) {
             ctx.drawImage(this.image, -this.width / 2, -this.width / 2, this.width, this.width);
             ctx.restore();
         }
-        this.netElement.drawName(this.x - this.width / 2, this.y - 0.5 * this.width, c, ctx);
-        this.netElement.drawParametersList(this.x - this.width / 2, this.y + 0.7 * this.width, c, ctx);
+        this.drawList(c, ctx);
+    };
+
+    this.drawList = function (c, ctx) {
+        if (this.direction % 2 === 0) {
+            this.netElement.drawName(this.x - this.width * 0.5, this.y - 0.5 * this.width, c, ctx);
+            this.netElement.drawParametersList(this.x - this.width * 0.5, this.y + 0.7 * this.width, c, ctx);
+        } else {
+            this.netElement.drawName(this.x - this.width * 0.5, this.y - 0.5 * this.width, c, ctx);
+            this.netElement.drawParametersList(this.x + this.width * 0.55, this.y - 0.3 * this.width, c, ctx);
+        }
     };
 
     this.saveMe = function () {
@@ -247,7 +252,7 @@ function Element(x, y, name) {
             if (i !== this.joints.length - 1) {
                 joints += "|";
             }
-        }        
+        }
         return "e:" + this.id + ":" + this.name + ":" + Math.floor(this.x / scale) + ":" + Math.floor(this.y / scale)
                 + ":" + this.direction + ":" + joints + ":" + this.netElement.saveMe();
     };

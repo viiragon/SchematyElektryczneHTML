@@ -123,6 +123,7 @@ function NonRotableLineElement(x, y, name) {
             ctx.drawImage(this.image, -this.width / 2, -this.width / 2, this.width, this.width);
             ctx.restore();
         }
+        this.drawList(c, ctx);
     };
     return element;
 }

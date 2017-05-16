@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* global scale, halfScale, defaultFont, lineWidth */
+/* global scale, halfScale, defaultFont, lineWidth, Infinity */
 
 function DiagramGUI(x, y, width, height) {
     var gui = new GuiElement(x, y, width, height, true);
@@ -72,6 +72,9 @@ function DiagramGUI(x, y, width, height) {
             }
             this.chartWidth = this.width - this.startX * 2;
             this.chartHeight = this.height - this.startY * 2;
+            if (Math.abs(this.max - this.min) <= 0.001) {
+                this.max = 1;
+            }
             this.heightScale = this.chartHeight / (this.max - this.min);
             if (!this.isIndep) {
                 this.endScale = this.chartWidth / (this.getY(this.maxScale) - this.getY(this.minScale));

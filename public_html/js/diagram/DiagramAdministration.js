@@ -196,17 +196,30 @@ function Diagram(width, height) {
         return false;
     };
 
-    this.checkVariableListsInPlace = function (x, y) {
+    this.checkRightGUIInPlace = function (x, y) {
+        for (var i = this.GUI.length - 1; i >= 0; i--) {
+            if (this.GUI[i].onRightClick(x, y)) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    this.checkMenuOption = function (x, y) {
         if (this.xoffset !== 0 || this.yoffset !== 0) {
             x -= this.xoffset;
             y -= this.yoffset;
         }
+        return this.checkVariablesLists(x, y) || this.checkRightGUIInPlace(x + this.xoffset, y + this.yoffset);
+    };
+    
+    this.checkVariablesLists = function (x, y) {
         var checked = false;
         var toDelete = [];
         for (var i = 0; i < this.netJoints.length; i++) {
             if (!checked && this.netJoints[i].isClose(x, y)) {
                 if (!this.netJoints[i].isListOpen()) {
-                    this.netJoints[i].showList(x, y);
+                    this.netJoints[i].showList(x + this.xoffset, y + this.yoffset);
                     checked = true;
                 }
             } else {
@@ -230,7 +243,7 @@ function Diagram(width, height) {
                         this.addElement(net);
                         this.addElement(net.listGUI);
                         checked = true;
-                        net.showList(x, y);
+                        net.showList(x + this.xoffset, y + this.yoffset);
                         break;
                     }
                 }
@@ -410,16 +423,6 @@ function Diagram(width, height) {
             for (var i = 0; i < element.joints.length; i++) {
                 this.addElement(element.joints[i]);
             }
-            /*if (DEBUG) {
-             var joint;
-             for (var i = 0; i < element.joints.length; i++) {
-             joint = element.joints[i];
-             console.log(i + "." + joint);
-             for (var j = 0; j < 4; j++) {
-             console.log(" " + j + ". " + (joint.joints[j] === null));
-             }
-             }
-             }*/
         }
     };
 
